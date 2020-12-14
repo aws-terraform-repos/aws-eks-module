@@ -1,0 +1,3 @@
+variable "ekscluster" {
+  type = string
+}
