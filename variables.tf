@@ -6,7 +6,7 @@ variable "cluster_name" {
 variable "cluster_version" {
   description = "Kubernetes version to use for the EKS cluster"
   type        = string
-  default     = "1.34"
+  default     = "1.32"
 }
 
 variable "vpc_name" {
@@ -30,9 +30,7 @@ variable "vpc_id" {
 variable "subnet_tags" {
   description = "Tags to identify subnets for the EKS cluster. If not provided, will use all private subnets in the VPC"
   type        = map(string)
-  default = {
-    "kubernetes.io/role/internal-elb" = "1"
-  }
+  default     = {}
 }
 
 variable "subnet_ids" {
@@ -96,7 +94,7 @@ variable "enable_cluster_log_types" {
 }
 
 variable "node_group_ami_type" {
-  description = "Type of Amazon Machine Image (AMI) associated with the EKS Node Group"
+  description = "Type of Amazon Machine Image (AMI) associated with the EKS Node Group. AL2023_x86_64_STANDARD will be available in future EKS versions"
   type        = string
   default     = "AL2_x86_64"
 }
@@ -115,6 +113,24 @@ variable "node_group_disk_size" {
 
 variable "enable_irsa" {
   description = "Enable IAM Roles for Service Accounts"
+  type        = bool
+  default     = true
+}
+
+variable "enable_ssh_access" {
+  description = "Enable SSH access to worker nodes"
+  type        = bool
+  default     = false
+}
+
+variable "ssh_access_cidrs" {
+  description = "List of CIDR blocks that can SSH to worker nodes"
+  type        = list(string)
+  default     = []
+}
+
+variable "enable_addon_version_management" {
+  description = "Enable version management for EKS add-ons"
   type        = bool
   default     = true
 }

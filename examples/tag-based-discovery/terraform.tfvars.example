@@ -1,0 +1,36 @@
+# Example variables for tag-based-discovery
+# Copy this file to terraform.tfvars and customize the values
+
+# Required: Your cluster name
+cluster_name = "my-test-cluster-tags"
+
+# Required: VPC tags to discover VPC
+vpc_tags = {
+  Environment = "production"  # Replace with your actual VPC tags
+  Team        = "platform"
+}
+
+# Required: Subnet tags to discover subnets
+subnet_tags = {
+  Type        = "private"     # Replace with your actual subnet tags
+  Environment = "production"
+}
+
+# Optional: Customize these values as needed
+cluster_version = "1.32"
+
+# Node group configuration
+node_group_instance_types = ["t3.medium"]
+node_group_desired_size   = 2
+node_group_max_size       = 4
+node_group_min_size       = 1
+
+# Security configuration (restrict API access to your IP)
+public_access_cidrs = ["YOUR_IP/32"]  # Replace with your actual IP
+
+# Tags
+tags = {
+  Environment = "test"
+  Project     = "eks-module-testing"
+  ManagedBy   = "terraform"
+}

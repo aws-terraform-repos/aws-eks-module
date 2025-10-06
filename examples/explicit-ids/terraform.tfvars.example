@@ -1,0 +1,31 @@
+# Example variables for explicit-ids
+# Copy this file to terraform.tfvars and customize the values
+
+# Required: Your cluster name
+cluster_name = "my-test-cluster-explicit"
+
+# Required: Explicit VPC and subnet IDs
+vpc_id = "vpc-12345678"  # Replace with your actual VPC ID
+subnet_ids = [           # Replace with your actual subnet IDs
+  "subnet-12345678",
+  "subnet-87654321"
+]
+
+# Optional: Customize these values as needed
+cluster_version = "1.32"
+
+# Node group configuration
+node_group_instance_types = ["t3.medium"]
+node_group_desired_size   = 2
+node_group_max_size       = 4
+node_group_min_size       = 1
+
+# Security configuration (restrict API access to your IP)
+public_access_cidrs = ["YOUR_IP/32"]  # Replace with your actual IP
+
+# Tags
+tags = {
+  Environment = "test"
+  Project     = "eks-module-testing"
+  ManagedBy   = "terraform"
+}

@@ -68,17 +68,39 @@ resource "aws_iam_role_policy_attachment" "fargate_profile_AmazonEKSFargatePodEx
   role       = aws_iam_role.fargate_profile.name
 }
 
-# OIDC Provider for EKS
-resource "aws_iam_openid_connect_provider" "eks" {
+# IAM role for VPC CNI
+resource "aws_iam_role" "vpc_cni" {
   count = var.enable_irsa ? 1 : 0
+  name  = "${var.cluster_name}-vpc-cni-role"
 
-  client_id_list  = ["sts.amazonaws.com"]
-  thumbprint_list = [data.tls_certificate.eks.certificates[0].sha1_fingerprint]
-  url             = aws_eks_cluster.this.identity[0].oidc[0].issuer
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Action = "sts:AssumeRole"
+        Effect = "Allow"
+        Principal = {
+          Federated = aws_iam_openid_connect_provider.eks[0].arn
+        }
+        Condition = {
+          StringEquals = {
+            "${replace(aws_iam_openid_connect_provider.eks[0].url, "https://", "")}:sub" = "system:serviceaccount:kube-system:aws-node"
+            "${replace(aws_iam_openid_connect_provider.eks[0].url, "https://", "")}:aud" = "sts.amazonaws.com"
+          }
+        }
+      }
+    ]
+  })
 
   tags = merge(var.tags, {
-    Name = "${var.cluster_name}-eks-irsa"
+    Name = "${var.cluster_name}-vpc-cni-role"
   })
+}
+
+resource "aws_iam_role_policy_attachment" "vpc_cni_policy" {
+  count      = var.enable_irsa ? 1 : 0
+  policy_arn = "arn:${data.aws_partition.current.partition}:iam::aws:policy/AmazonEKS_CNI_Policy"
+  role       = aws_iam_role.vpc_cni[0].name
 }
 
 # IAM role for EBS CSI Driver
@@ -97,8 +119,8 @@ resource "aws_iam_role" "ebs_csi_driver" {
         }
         Condition = {
           StringEquals = {
-            "${replace(aws_iam_openid_connect_provider.eks[0].url, "https://", "")}:sub" : "system:serviceaccount:kube-system:ebs-csi-controller-sa"
-            "${replace(aws_iam_openid_connect_provider.eks[0].url, "https://", "")}:aud" : "sts.amazonaws.com"
+            "${replace(aws_iam_openid_connect_provider.eks[0].url, "https://", "")}:sub" = "system:serviceaccount:kube-system:ebs-csi-controller-sa"
+            "${replace(aws_iam_openid_connect_provider.eks[0].url, "https://", "")}:aud" = "sts.amazonaws.com"
           }
         }
       }
@@ -115,3 +137,17 @@ resource "aws_iam_role_policy_attachment" "ebs_csi_driver_policy" {
   policy_arn = "arn:${data.aws_partition.current.partition}:iam::aws:policy/service-role/Amazon_EBS_CSI_DriverPolicy"
   role       = aws_iam_role.ebs_csi_driver[0].name
 }
+
+# OIDC Provider for EKS
+resource "aws_iam_openid_connect_provider" "eks" {
+  count = var.enable_irsa ? 1 : 0
+
+  client_id_list  = ["sts.amazonaws.com"]
+  thumbprint_list = [data.tls_certificate.eks.certificates[0].sha1_fingerprint]
+  url             = aws_eks_cluster.this.identity[0].oidc[0].issuer
+
+  tags = merge(var.tags, {
+    Name = "${var.cluster_name}-eks-irsa"
+  })
+}
+

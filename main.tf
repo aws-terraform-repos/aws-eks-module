@@ -54,7 +54,20 @@ resource "aws_security_group" "node_group" {
     security_groups = [aws_security_group.cluster.id]
   }
 
+  # Allow SSH access (optional, only if needed for debugging)
+  dynamic "ingress" {
+    for_each = var.enable_ssh_access ? [1] : []
+    content {
+      description = "SSH access"
+      from_port   = 22
+      to_port     = 22
+      protocol    = "tcp"
+      cidr_blocks = var.ssh_access_cidrs
+    }
+  }
+
   egress {
+    description = "All outbound traffic"
     from_port   = 0
     to_port     = 0
     protocol    = "-1"
@@ -140,30 +153,52 @@ resource "aws_eks_node_group" "this" {
 
 # EKS Add-ons
 resource "aws_eks_addon" "vpc_cni" {
-  cluster_name = aws_eks_cluster.this.name
-  addon_name   = "vpc-cni"
+  cluster_name                = aws_eks_cluster.this.name
+  addon_name                  = "vpc-cni"
+  addon_version               = var.enable_addon_version_management ? data.aws_eks_addon_version.vpc_cni[0].version : null
+  resolve_conflicts_on_create = "OVERWRITE"
+  resolve_conflicts_on_update = "OVERWRITE"
+  service_account_role_arn    = var.enable_irsa ? aws_iam_role.vpc_cni[0].arn : null
 
   depends_on = [aws_eks_node_group.this]
+
+  tags = var.tags
 }
 
 resource "aws_eks_addon" "kube_proxy" {
-  cluster_name = aws_eks_cluster.this.name
-  addon_name   = "kube-proxy"
+  cluster_name                = aws_eks_cluster.this.name
+  addon_name                  = "kube-proxy"
+  addon_version               = var.enable_addon_version_management ? data.aws_eks_addon_version.kube_proxy[0].version : null
+  resolve_conflicts_on_create = "OVERWRITE"
+  resolve_conflicts_on_update = "OVERWRITE"
 
   depends_on = [aws_eks_node_group.this]
+
+  tags = var.tags
 }
 
 resource "aws_eks_addon" "coredns" {
-  cluster_name = aws_eks_cluster.this.name
-  addon_name   = "coredns"
+  cluster_name                = aws_eks_cluster.this.name
+  addon_name                  = "coredns"
+  addon_version               = var.enable_addon_version_management ? data.aws_eks_addon_version.coredns[0].version : null
+  resolve_conflicts_on_create = "OVERWRITE"
+  resolve_conflicts_on_update = "OVERWRITE"
 
   depends_on = [aws_eks_node_group.this]
+
+  tags = var.tags
 }
 
 resource "aws_eks_addon" "ebs_csi_driver" {
-  cluster_name             = aws_eks_cluster.this.name
-  addon_name               = "aws-ebs-csi-driver"
-  service_account_role_arn = var.enable_irsa ? aws_iam_role.ebs_csi_driver[0].arn : null
+  cluster_name                = aws_eks_cluster.this.name
+  addon_name                  = "aws-ebs-csi-driver"
+  addon_version               = var.enable_addon_version_management ? data.aws_eks_addon_version.ebs_csi[0].version : null
+  resolve_conflicts_on_create = "OVERWRITE"
+  resolve_conflicts_on_update = "OVERWRITE"
+  service_account_role_arn    = var.enable_irsa ? aws_iam_role.ebs_csi_driver[0].arn : null
 
   depends_on = [aws_eks_node_group.this]
+
+  tags = var.tags
 }
+

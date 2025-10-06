@@ -1,0 +1,254 @@
+version: "3"
+
+vars:
+  EXAMPLES_DIR: examples
+  MODULE_DIR: .
+
+tasks:
+  default:
+    desc: Show available tasks
+    cmds:
+      - task --list
+
+  format:
+    desc: Format all Terraform files
+    cmds:
+      - terraform fmt -recursive {{.MODULE_DIR}}
+
+  validate:
+    desc: Validate the main module
+    dir: "{{.MODULE_DIR}}"
+    cmds:
+      - terraform init -upgrade
+      - terraform validate
+
+  validate-examples:
+    desc: Validate all examples
+    cmds:
+      - task: validate-simple-cluster
+      - task: validate-vpc-name-discovery
+      - task: validate-tag-based-discovery
+      - task: validate-explicit-ids
+
+  validate-simple-cluster:
+    desc: Validate simple-cluster example
+    dir: "{{.EXAMPLES_DIR}}/simple-cluster"
+    cmds:
+      - echo "🔍 Validating simple-cluster example..."
+      - terraform init -upgrade
+      - terraform validate
+      - echo "✅ simple-cluster validation complete"
+
+  validate-vpc-name-discovery:
+    desc: Validate vpc-name-discovery example
+    dir: "{{.EXAMPLES_DIR}}/vpc-name-discovery"
+    cmds:
+      - echo "🔍 Validating vpc-name-discovery example..."
+      - terraform init -upgrade
+      - terraform validate
+      - echo "✅ vpc-name-discovery validation complete"
+
+  validate-tag-based-discovery:
+    desc: Validate tag-based-discovery example
+    dir: "{{.EXAMPLES_DIR}}/tag-based-discovery"
+    cmds:
+      - echo "🔍 Validating tag-based-discovery example..."
+      - terraform init -upgrade
+      - terraform validate
+      - echo "✅ tag-based-discovery validation complete"
+
+  validate-explicit-ids:
+    desc: Validate explicit-ids example
+    dir: "{{.EXAMPLES_DIR}}/explicit-ids"
+    cmds:
+      - echo "🔍 Validating explicit-ids example..."
+      - terraform init -upgrade
+      - terraform validate
+      - echo "✅ explicit-ids validation complete"
+
+  plan:
+    desc: Plan the main module (requires vars)
+    dir: "{{.MODULE_DIR}}"
+    cmds:
+      - terraform plan {{.CLI_ARGS}}
+
+  plan-examples:
+    desc: Plan all examples (dry-run to check syntax)
+    cmds:
+      - task: plan-simple-cluster
+      - task: plan-vpc-name-discovery
+      - task: plan-tag-based-discovery
+      - task: plan-explicit-ids
+
+  plan-simple-cluster:
+    desc: Plan simple-cluster example
+    dir: "{{.EXAMPLES_DIR}}/simple-cluster"
+    cmds:
+      - echo "📋 Planning simple-cluster example..."
+      - terraform plan -var-file="terraform.tfvars.example" -out=tfplan || echo "⚠️  Plan failed - check variables and AWS credentials"
+
+  plan-vpc-name-discovery:
+    desc: Plan vpc-name-discovery example
+    dir: "{{.EXAMPLES_DIR}}/vpc-name-discovery"
+    cmds:
+      - echo "📋 Planning vpc-name-discovery example..."
+      - terraform plan -var-file="terraform.tfvars.example" -out=tfplan || echo "⚠️  Plan failed - check variables and AWS credentials"
+
+  plan-tag-based-discovery:
+    desc: Plan tag-based-discovery example
+    dir: "{{.EXAMPLES_DIR}}/tag-based-discovery"
+    cmds:
+      - echo "📋 Planning tag-based-discovery example..."
+      - terraform plan -var-file="terraform.tfvars.example" -out=tfplan || echo "⚠️  Plan failed - check variables and AWS credentials"
+
+  plan-explicit-ids:
+    desc: Plan explicit-ids example
+    dir: "{{.EXAMPLES_DIR}}/explicit-ids"
+    cmds:
+      - echo "📋 Planning explicit-ids example..."
+      - terraform plan -var-file="terraform.tfvars.example" -out=tfplan || echo "⚠️  Plan failed - check variables and AWS credentials"
+
+  apply-simple-cluster:
+    desc: Apply simple-cluster example
+    dir: "{{.EXAMPLES_DIR}}/simple-cluster"
+    cmds:
+      - echo "🚀 Applying simple-cluster example..."
+      - terraform apply -var-file="terraform.tfvars.example" {{.CLI_ARGS}}
+
+  apply-vpc-name-discovery:
+    desc: Apply vpc-name-discovery example
+    dir: "{{.EXAMPLES_DIR}}/vpc-name-discovery"
+    cmds:
+      - echo "🚀 Applying vpc-name-discovery example..."
+      - terraform apply -var-file="terraform.tfvars.example" {{.CLI_ARGS}}
+
+  apply-tag-based-discovery:
+    desc: Apply tag-based-discovery example
+    dir: "{{.EXAMPLES_DIR}}/tag-based-discovery"
+    cmds:
+      - echo "🚀 Applying tag-based-discovery example..."
+      - terraform apply -var-file="terraform.tfvars.example" {{.CLI_ARGS}}
+
+  apply-explicit-ids:
+    desc: Apply explicit-ids example
+    dir: "{{.EXAMPLES_DIR}}/explicit-ids"
+    cmds:
+      - echo "🚀 Applying explicit-ids example..."
+      - terraform apply -var-file="terraform.tfvars.example" {{.CLI_ARGS}}
+
+  destroy-simple-cluster:
+    desc: Destroy simple-cluster example
+    dir: "{{.EXAMPLES_DIR}}/simple-cluster"
+    cmds:
+      - echo "💥 Destroying simple-cluster example..."
+      - terraform destroy -var-file="terraform.tfvars.example" {{.CLI_ARGS}}
+
+  destroy-vpc-name-discovery:
+    desc: Destroy vpc-name-discovery example
+    dir: "{{.EXAMPLES_DIR}}/vpc-name-discovery"
+    cmds:
+      - echo "💥 Destroying vpc-name-discovery example..."
+      - terraform destroy -var-file="terraform.tfvars.example" {{.CLI_ARGS}}
+
+  destroy-tag-based-discovery:
+    desc: Destroy tag-based-discovery example
+    dir: "{{.EXAMPLES_DIR}}/tag-based-discovery"
+    cmds:
+      - echo "💥 Destroying tag-based-discovery example..."
+      - terraform destroy -var-file="terraform.tfvars.example" {{.CLI_ARGS}}
+
+  destroy-explicit-ids:
+    desc: Destroy explicit-ids example
+    dir: "{{.EXAMPLES_DIR}}/explicit-ids"
+    cmds:
+      - echo "💥 Destroying explicit-ids example..."
+      - terraform destroy -var-file="terraform.tfvars.example" {{.CLI_ARGS}}
+
+  clean:
+    desc: Clean all Terraform state and cache files
+    cmds:
+      - echo "🧹 Cleaning main module..."
+      - rm -rf {{.MODULE_DIR}}/.terraform
+      - rm -f {{.MODULE_DIR}}/terraform.tfstate*
+      - rm -f {{.MODULE_DIR}}/tfplan
+      - echo "🧹 Cleaning examples..."
+      - find {{.EXAMPLES_DIR}} -name ".terraform" -type d -exec rm -rf {} + 2>/dev/null || true
+      - find {{.EXAMPLES_DIR}} -name "terraform.tfstate*" -type f -delete 2>/dev/null || true
+      - find {{.EXAMPLES_DIR}} -name "tfplan" -type f -delete 2>/dev/null || true
+      - echo "✅ Cleanup complete"
+
+  init-all:
+    desc: Initialize main module and all examples
+    cmds:
+      - echo "🔧 Initializing main module..."
+      - terraform -chdir={{.MODULE_DIR}} init -upgrade
+      - echo "🔧 Initializing examples..."
+      - terraform -chdir={{.EXAMPLES_DIR}}/simple-cluster init -upgrade
+      - terraform -chdir={{.EXAMPLES_DIR}}/vpc-name-discovery init -upgrade
+      - terraform -chdir={{.EXAMPLES_DIR}}/tag-based-discovery init -upgrade
+      - terraform -chdir={{.EXAMPLES_DIR}}/explicit-ids init -upgrade
+      - echo "✅ All modules initialized"
+
+  test-all:
+    desc: Run complete test suite (format, validate, plan)
+    cmds:
+      - echo "🧪 Running complete test suite..."
+      - task: format
+      - task: validate
+      - task: validate-examples
+      - echo "✅ All tests passed!"
+
+  docs-preview:
+    desc: Preview documentation with terraform-docs
+    cmds:
+      - terraform-docs markdown table --output-file README-generated.md {{.MODULE_DIR}}
+      - echo "📖 Documentation preview generated in README-generated.md"
+
+  security-scan:
+    desc: Run security scan with tfsec (if available)
+    cmds:
+      - |
+        if command -v tfsec >/dev/null 2>&1; then
+          echo "🔒 Running security scan..."
+          tfsec {{.MODULE_DIR}}
+        else
+          echo "⚠️  tfsec not found. Install with: brew install tfsec"
+        fi
+
+  cost-estimate:
+    desc: Estimate costs with infracost (if available)
+    dir: "{{.EXAMPLES_DIR}}/simple-cluster"
+    cmds:
+      - |
+        if command -v infracost >/dev/null 2>&1; then
+          echo "💰 Estimating costs for simple-cluster example..."
+          infracost breakdown --path .
+        else
+          echo "⚠️  infracost not found. Install from: https://www.infracost.io/docs/#quick-start"
+        fi
+
+  help:
+    desc: Show detailed help for common workflows
+    cmds:
+      - echo "🚀 AWS EKS Module Task Runner"
+      - echo ""
+      - echo "Common workflows:"
+      - echo "  task test-all # Complete test suite"
+      - echo "  task validate-examples # Validate all examples"
+      - echo "  task plan-examples # Plan all examples"
+      - echo ""
+      - echo "Individual example commands:"
+      - echo "  task apply-simple-cluster # Deploy simple cluster"
+      - echo "  task destroy-simple-cluster # Destroy simple cluster"
+      - echo ""
+      - echo "Maintenance:"
+      - echo "  task clean # Clean all state files"
+      - echo "  task init-all # Initialize all modules"
+      - echo "  task format # Format all Terraform files"
+      - echo ""
+      - echo "Advanced:"
+      - echo "  task security-scan # Security analysis"
+      - echo "  task cost-estimate # Cost estimation"
+      - echo "  task docs-preview # Generate documentation"
+      - echo ""
+      - 'echo "For all available tasks run: task --list"'

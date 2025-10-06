@@ -4,14 +4,16 @@ This Terraform module creates an Amazon EKS (Elastic Kubernetes Service) cluster
 
 ## Features
 
-- EKS Cluster with configurable Kubernetes version
-- Managed Node Groups with auto-scaling
-- Essential EKS Add-ons (VPC CNI, CoreDNS, kube-proxy, EBS CSI driver)
-- IAM Roles for Service Accounts (IRSA) support
-- Security groups with proper ingress/egress rules
-- CloudWatch logging for control plane
-- Comprehensive outputs for integration
-- Configurable endpoint access and CIDR restrictions
+- **EKS Cluster**: Configurable Kubernetes version with automatic platform version management
+- **Managed Node Groups**: Auto-scaling worker nodes with configurable instance types and capacity
+- **Essential EKS Add-ons**: VPC CNI, CoreDNS, kube-proxy, and EBS CSI driver with automatic version management
+- **IRSA Support**: IAM Roles for Service Accounts for secure pod-to-AWS service communication
+- **Enhanced Security**: Dedicated security groups with proper ingress/egress rules and optional SSH access
+- **VPC Discovery**: Flexible VPC and subnet discovery by name, tags, or explicit IDs
+- **CloudWatch Logging**: Control plane logging for monitoring and troubleshooting
+- **Comprehensive Outputs**: All necessary outputs for integration with other infrastructure
+- **CIDR Restrictions**: Configurable endpoint access and public access CIDR blocks
+- **Production Ready**: Following AWS best practices with least privilege IAM roles
 
 ## Usage
 
@@ -144,10 +146,37 @@ module "eks" {
 
 ## Post-Deployment
 
-After deployment, configure kubectl:
+After successful deployment, follow these steps to configure and validate your EKS cluster:
 
+### 1. Configure kubectl
 ```bash
 aws eks update-kubeconfig --region <region> --name <cluster-name>
+```
+
+### 2. Verify Cluster Access
+```bash
+kubectl get nodes
+kubectl get pods -n kube-system
+```
+
+### 3. Validate Add-ons
+```bash
+# Check EKS add-ons status
+aws eks describe-addon --cluster-name <cluster-name> --addon-name vpc-cni
+aws eks describe-addon --cluster-name <cluster-name> --addon-name coredns
+aws eks describe-addon --cluster-name <cluster-name> --addon-name kube-proxy
+aws eks describe-addon --cluster-name <cluster-name> --addon-name aws-ebs-csi-driver
+```
+
+### 4. Test Storage (EBS CSI)
+```bash
+kubectl apply -f https://raw.githubusercontent.com/kubernetes-sigs/aws-ebs-csi-driver/master/examples/kubernetes/dynamic-provisioning/manifests/storageclass.yaml
+```
+
+### 5. Verify IRSA (if enabled)
+```bash
+kubectl get serviceaccounts -n kube-system
+kubectl describe serviceaccount ebs-csi-controller-sa -n kube-system
 ```
 
 ## Security Considerations
@@ -159,7 +188,57 @@ aws eks update-kubeconfig --region <region> --name <cluster-name>
 
 ## Examples
 
-See the `eks-terraform/` directory for a complete example that includes VPC creation.
+See the `examples/` directory for complete working examples:
+
+- **[Simple Cluster](./examples/simple-cluster/)**: Minimal configuration for quick deployment
+- **[VPC Name Discovery](./examples/vpc-name-discovery/)**: VPC discovery by name tag
+- **[Tag-Based Discovery](./examples/tag-based-discovery/)**: VPC and subnet discovery by custom tags
+- **[Explicit IDs](./examples/explicit-ids/)**: Explicit VPC and subnet IDs for maximum control
+
+Each example includes:
+- Complete Terraform configuration
+- Detailed README with usage instructions
+- Variable definitions and example values
+- Expected outputs and validation steps
+
+### Quick Testing with Taskfile
+
+This repository includes a [Taskfile](./TASKFILE.md) for easy testing and validation:
+
+```bash
+# Install Task runner (one-time setup)
+brew install go-task/tap/go-task
+
+# Run complete test suite
+task test-all
+
+# Validate all examples
+task validate-examples
+
+# Plan specific example
+task plan-simple-cluster
+```
+
+See [TASKFILE.md](./TASKFILE.md) for complete usage instructions.
+
+## Security Best Practices
+
+- **Restrict API Access**: Use `public_access_cidrs` to limit who can access the API server
+- **Enable Private Endpoint**: Keep `endpoint_private_access = true` for internal cluster communication
+- **IRSA**: Enable `enable_irsa = true` for secure pod-to-AWS service communication
+- **Node SSH Access**: Only enable `enable_ssh_access = true` if absolutely necessary for debugging
+- **Regular Updates**: Keep Kubernetes version and add-ons updated
+- **Least Privilege**: Use specific IAM roles and policies for workloads
+
+## Add-on Management
+
+The module automatically manages EKS add-ons with the latest compatible versions:
+- **VPC CNI**: Network plugin for pod networking with IRSA support
+- **CoreDNS**: DNS server for service discovery
+- **kube-proxy**: Network proxy for services
+- **EBS CSI Driver**: Storage driver for persistent volumes with IRSA support
+
+All add-ons support version management and can be configured independently.
 
 ## License
 
