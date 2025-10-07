@@ -9,7 +9,7 @@ variable "cluster_name" {
 variable "cluster_version" {
   description = "Kubernetes version to use for the EKS cluster"
   type        = string
-  default     = "1.31"
+  default     = "1.33"
 }
 
 variable "vpc_name" {
@@ -73,9 +73,9 @@ variable "node_group_capacity_type" {
 }
 
 variable "node_group_ami_type" {
-  description = "AMI type for the node group"
+  description = "AMI type for the node group. AL2023_x86_64_STANDARD is required for Kubernetes 1.33+"
   type        = string
-  default     = "AL2_x86_64"
+  default     = "AL2023_x86_64_STANDARD"
 }
 
 variable "node_group_disk_size" {

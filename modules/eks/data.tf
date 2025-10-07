@@ -4,10 +4,8 @@ data "aws_region" "current" {}
 
 data "aws_partition" "current" {}
 
-# Get the latest EKS optimized AMI
-data "aws_ssm_parameter" "eks_ami_release_version" {
-  name = "/aws/service/eks/optimized-ami/${var.cluster_version}/amazon-linux-2/recommended/release_version"
-}
+# Note: EKS managed node groups will automatically use the appropriate AMI for the cluster version
+# The EKS service handles AMI selection, so we don't need to specify AMI details manually
 
 # TLS certificate for OIDC
 data "tls_certificate" "eks" {

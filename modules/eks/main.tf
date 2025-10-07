@@ -184,9 +184,12 @@ resource "aws_eks_node_group" "this" {
     max_unavailable = 1
   }
 
-  remote_access {
-    ec2_ssh_key               = var.enable_ssh_access ? var.ssh_key_name : null
-    source_security_group_ids = var.enable_ssh_access ? [aws_security_group.node_group.id] : null
+  dynamic "remote_access" {
+    for_each = var.enable_ssh_access ? [1] : []
+    content {
+      ec2_ssh_key               = var.ssh_key_name
+      source_security_group_ids = [aws_security_group.node_group.id]
+    }
   }
 
   ami_type       = var.node_group_ami_type
