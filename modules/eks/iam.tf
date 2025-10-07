@@ -202,7 +202,7 @@ resource "aws_iam_role" "vpc_cni" {
     Version = "2012-10-17"
     Statement = [
       {
-        Action = "sts:AssumeRole"
+        Action = "sts:AssumeRoleWithWebIdentity"
         Effect = "Allow"
         Principal = {
           Federated = aws_iam_openid_connect_provider.eks[0].arn
@@ -273,7 +273,7 @@ resource "aws_iam_role" "ebs_csi_driver" {
     Version = "2012-10-17"
     Statement = [
       {
-        Action = "sts:AssumeRole"
+        Action = "sts:AssumeRoleWithWebIdentity"
         Effect = "Allow"
         Principal = {
           Federated = aws_iam_openid_connect_provider.eks[0].arn

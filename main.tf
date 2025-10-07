@@ -25,6 +25,9 @@ module "eks_simple" {
   # IRSA
   enable_irsa = var.enable_irsa
 
+  # Optional: deploy AWS Load Balancer Controller via Helm
+  enable_aws_lb_controller = false
+
   # Tags
   tags = var.tags
 }

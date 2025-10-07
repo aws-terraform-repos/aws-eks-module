@@ -13,6 +13,7 @@ data "aws_eks_cluster_auth" "this" {
 }
 
 resource "helm_release" "aws_load_balancer_controller" {
+  count      = var.enable_aws_lb_controller ? 1 : 0
   name       = "aws-load-balancer-controller"
   namespace  = "kube-system"
   repository = "https://aws.github.io/eks-charts"

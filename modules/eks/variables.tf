@@ -140,3 +140,9 @@ variable "enable_addon_version_management" {
   type        = bool
   default     = true
 }
+
+variable "enable_aws_lb_controller" {
+  description = "Enable deployment of the AWS Load Balancer Controller via Helm"
+  type        = bool
+  default     = false
+}
