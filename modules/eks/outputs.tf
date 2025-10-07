@@ -134,3 +134,19 @@ output "load_balancer_controller_role_arn" {
   description = "ARN of the AWS Load Balancer Controller IAM role (alias for backward compatibility)"
   value       = var.enable_irsa && var.enable_load_balancer_controller ? aws_iam_role.alb_controller[0].arn : null
 }
+
+# Helm Deployment Outputs
+output "helm_aws_load_balancer_controller_status" {
+  description = "Status of the AWS Load Balancer Controller Helm release"
+  value       = var.enable_helm_deployments && var.enable_load_balancer_controller ? helm_release.aws_load_balancer_controller[0].status : "not_deployed"
+}
+
+output "helm_external_dns_status" {
+  description = "Status of the ExternalDNS Helm release"
+  value       = var.enable_helm_deployments && var.enable_external_dns ? helm_release.external_dns[0].status : "not_deployed"
+}
+
+output "helm_deployments_enabled" {
+  description = "Whether Helm deployments are enabled"
+  value       = var.enable_helm_deployments
+}

@@ -229,6 +229,25 @@ variable "external_dns_log_level" {
   default     = "info"
 }
 
+# Helm Deployment Variables
+variable "enable_helm_deployments" {
+  description = "Whether to deploy AWS Load Balancer Controller and ExternalDNS via Helm"
+  type        = bool
+  default     = false
+}
+
+variable "helm_timeout" {
+  description = "Timeout for Helm deployments in seconds"
+  type        = number
+  default     = 600
+}
+
+variable "wait_for_ready" {
+  description = "Whether to wait for Helm deployments to be ready"
+  type        = bool
+  default     = true
+}
+
 variable "tags" {
   description = "A map of tags to add to all resources"
   type        = map(string)

@@ -60,6 +60,11 @@ module "eks" {
   external_dns_provider           = var.external_dns_provider
   external_dns_log_level          = var.external_dns_log_level
 
+  # Helm Deployment Configuration
+  enable_helm_deployments = var.enable_helm_deployments
+  helm_timeout            = var.helm_timeout
+  wait_for_ready          = var.wait_for_ready
+
   # Tags
   tags = var.tags
 }
