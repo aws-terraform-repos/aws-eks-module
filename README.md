@@ -1,8 +1,8 @@
 # AWS EKS Terraform Module
 
-## 📁 New Centralized Structure
+## 📁 Simplified Structure
 
-This repository has been reorganized for better debugging and maintenance. The main EKS module is now located in `modules/eks/` with a clean separation between the module code and usage examples.
+This repository has been organized with a clean, simplified structure for better maintainability. The main EKS module is centralized in `modules/eks/` with a root-level example for immediate usage.
 
 ```
 aws-eks-module/
@@ -13,11 +13,6 @@ aws-eks-module/
 │   ├── iam.tf           # IAM roles and policies
 │   ├── data.tf          # Data sources
 │   └── versions.tf      # Provider requirements
-├── examples/             # 📚 Usage examples
-│   ├── simple-cluster/   # Minimal configuration
-│   ├── vpc-name-discovery/
-│   ├── tag-based-discovery/
-│   └── explicit-ids/
 ├── main.tf              # 🚀 Root-level usage example
 ├── README.md            # This file
 ├── TASKFILE.md          # Development workflow guide
@@ -26,7 +21,7 @@ aws-eks-module/
 
 ## 🚀 Quick Start
 
-### Using the Centralized Module
+### Using the Module
 
 ```hcl
 module "eks" {
@@ -60,14 +55,9 @@ module "eks" {
 - **📊 Add-on Management** - Automatic version management
 - **🔧 Flexible Configuration** - Three approaches for VPC/subnet selection
 
-## 📖 Usage Examples
+## 📖 Usage Example
 
-All examples have been updated to reference the centralized module:
-
-- **[Simple Cluster](examples/simple-cluster/)** - Minimal configuration
-- **[VPC Name Discovery](examples/vpc-name-discovery/)** - Find VPC by name tag  
-- **[Tag-based Discovery](examples/tag-based-discovery/)** - Find VPC/subnets by custom tags
-- **[Explicit IDs](examples/explicit-ids/)** - Specify exact VPC/subnet IDs
+The root-level `main.tf` provides a complete working example:
 
 ### Option 1: VPC Discovery by Name (Recommended)
 ```hcl

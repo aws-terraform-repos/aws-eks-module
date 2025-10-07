@@ -78,17 +78,14 @@ task cost-estimate
 
 ## Repository Structure
 
-This repository uses a centralized module structure:
+This repository uses a simplified, centralized structure:
 
 ```
 aws-eks-module/
 ├── modules/eks/          # 🎯 Main EKS module (centralized)
-├── examples/             # 📚 Complete usage examples
-│   ├── simple-cluster/   # Minimal configuration
-│   ├── vpc-name-discovery/  # VPC discovery by name
-│   ├── tag-based-discovery/ # Discovery by custom tags
-│   └── explicit-ids/     # Explicit resource IDs
-├── main.tf              # 🚀 Root-level usage example
+├── main.tf              # � Root-level usage example
+├── README.md            # Main documentation
+├── TASKFILE.md          # This file
 └── Taskfile.yml         # Task automation
 ```
 
@@ -103,45 +100,42 @@ task format
 # Validate the main module
 task validate
 
-# Validate all examples
-task validate-examples
-
-# Plan all examples (syntax check)
-task plan-examples
+# Plan the root example (requires configured variables)
+task plan
 ```
 
-### Testing Individual Examples
+### Testing the Module
 
 ```bash
-# Validate specific example
-task validate-simple-cluster
+# Validate the main module
+task validate
 
-# Plan specific example (requires configured variables)
-task plan-simple-cluster
+# Plan the root example (requires configured variables)
+task plan
 
-# Apply specific example
-task apply-simple-cluster
+# Apply the root example
+task apply
 
-# Destroy specific example
-task destroy-simple-cluster
+# Destroy the root example
+task destroy
 ```
 
-### Before Deploying Examples
+### Before Deploying
 
 1. **Copy and customize variables**:
    ```bash
-   cp examples/simple-cluster/terraform.tfvars.example examples/simple-cluster/terraform.tfvars
+   cp terraform.tfvars.example terraform.tfvars
    # Edit terraform.tfvars with your values
    ```
 
 2. **Initialize and plan**:
    ```bash
-   task plan-simple-cluster
+   task plan
    ```
 
 3. **Apply when ready**:
    ```bash
-   task apply-simple-cluster
+   task apply
    ```
 
 ### Maintenance Tasks
@@ -163,22 +157,21 @@ task security-scan
 task cost-estimate
 ```
 
-## Available Examples
+## Available Configuration
 
-| Example | Description | Task Commands |
-|---------|-------------|---------------|
-| **simple-cluster** | Minimal configuration using module defaults | `task validate-simple-cluster`<br>`task plan-simple-cluster`<br>`task apply-simple-cluster` |
-| **vpc-name-discovery** | VPC discovery by name tag | `task validate-vpc-name-discovery`<br>`task plan-vpc-name-discovery`<br>`task apply-vpc-name-discovery` |
-| **tag-based-discovery** | VPC and subnet discovery by custom tags | `task validate-tag-based-discovery`<br>`task plan-tag-based-discovery`<br>`task apply-tag-based-discovery` |
-| **explicit-ids** | Explicit VPC and subnet IDs (backward compatibility) | `task validate-explicit-ids`<br>`task plan-explicit-ids`<br>`task apply-explicit-ids` |
+The root-level `main.tf` provides a complete, working example configuration:
+
+| Configuration | Description | Task Commands |
+|---------------|-------------|---------------|
+| **root main.tf** | Complete EKS cluster with VPC discovery | `task validate`<br>`task plan`<br>`task apply` |
 
 ## Configuration
 
-Each example includes a `terraform.tfvars.example` file. Copy this to `terraform.tfvars` and customize:
+The repository includes a `terraform.tfvars.example` file. Copy this to `terraform.tfvars` and customize:
 
 ```bash
-# Example for simple-cluster
-cp examples/simple-cluster/terraform.tfvars.example examples/simple-cluster/terraform.tfvars
+# Copy the example
+cp terraform.tfvars.example terraform.tfvars
 # Edit the values in terraform.tfvars
 ```
 
@@ -224,8 +217,9 @@ cp examples/simple-cluster/terraform.tfvars.example examples/simple-cluster/terr
 ### Getting Help
 
 - Run `task help` for detailed workflow guidance
-- Check individual example READMEs in `examples/*/README.md`
-- Review the main module documentation in `modules/eks/`
+- Check the main README.md for module documentation
+- Review the root-level `main.tf` for usage examples
+- Review the module documentation in `modules/eks/`
 - Review the main repository README in the repository root
 
 ## CI/CD Integration

@@ -37,4 +37,4 @@ module "eks" {
 }
 ```
 
-See the [main README](../../README.md) and [examples](../../examples/) for complete usage patterns.
+See the [main README](../../README.md) and root-level `main.tf` for complete usage patterns.

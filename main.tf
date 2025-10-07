@@ -1,6 +1,6 @@
 # Simple EKS cluster deployment with minimal configuration
 module "eks_simple" {
-  source = "../../modules/eks"
+  source = "./modules/eks"
 
   cluster_name = "simple-eks-cluster"
 

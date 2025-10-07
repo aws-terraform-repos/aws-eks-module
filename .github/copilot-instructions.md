@@ -38,11 +38,6 @@ aws-eks-module/
 │   ├── iam.tf          # IAM roles, policies, and IRSA configuration
 │   ├── data.tf         # Data sources for VPC/subnet discovery and add-on versions
 │   └── versions.tf     # Provider version constraints
-├── examples/            # 📚 Complete usage examples
-│   ├── simple-cluster/  # Minimal configuration for quick deployment
-│   ├── vpc-name-discovery/  # VPC discovery by name tag
-│   ├── tag-based-discovery/ # VPC and subnet discovery by custom tags
-│   └── explicit-ids/    # Explicit VPC and subnet IDs for maximum control
 ├── main.tf             # 🚀 Root-level usage example
 ├── README.md           # Main documentation
 ├── TASKFILE.md         # Development workflow guide
@@ -56,17 +51,10 @@ aws-eks-module/
 - **`modules/eks/iam.tf`**: IAM roles and policies required for EKS, worker nodes, and service accounts.
 - **`modules/eks/data.tf`**: Data sources for dynamic lookups (e.g., AMIs, VPCs, add-on versions).
 - **`modules/eks/versions.tf`**: Provider requirements and version constraints.
-- **`examples/`**: Complete working examples demonstrating different usage patterns.
 - **`main.tf`**: Root-level example showing how to use the centralized module.
 
-## Examples Structure
-- **simple-cluster/**: Minimal configuration for quick deployment
-- **vpc-name-discovery/**: VPC discovery by name tag
-- **tag-based-discovery/**: VPC and subnet discovery by custom tags
-- **explicit-ids/**: Explicit VPC and subnet IDs for maximum control
-
 ## Patterns & Conventions
-- **Module Usage**: The centralized module is in `modules/eks/`; the `examples/` folder contains complete usage examples.
+- **Module Usage**: The centralized module is in `modules/eks/`; the root-level `main.tf` provides a complete usage example.
 - **VPC Discovery**: Supports three methods - by name tag, by custom tags, or explicit IDs for flexibility
 - **Subnet Discovery**: Uses tags to find appropriate subnets (default: private subnets with kubernetes.io/role/internal-elb)
 - **Variable Naming**: Follows Terraform snake_case. Required variables are documented in `modules/eks/variables.tf`.
@@ -94,8 +82,8 @@ aws-eks-module/
 ## Taskfile Usage
 This repository includes a comprehensive Taskfile for streamlined development:
 - `task test-all`: Complete test suite (format, validate, plan)
-- `task validate-examples`: Validate all example configurations
-- `task plan-examples`: Plan all examples for syntax checking
+- `task validate`: Validate the main module
+- `task plan`: Plan the root example for syntax checking
 - `task clean`: Clean all Terraform state and cache files
 - See [TASKFILE.md](../TASKFILE.md) for complete usage guide
 
@@ -107,12 +95,12 @@ This repository includes a comprehensive Taskfile for streamlined development:
 ## Project-Specific Notes
 - **File-First Development**: Always create or edit actual files rather than providing code examples in chat
 - **Direct Implementation**: When users request code changes, implement them directly in the appropriate files
-- **Real Examples**: Create working example files in the `examples/` directory rather than showing inline code
+- **Real Examples**: Use the root-level `main.tf` as the primary working example rather than showing inline code
 - **Research Before Implementation**: Use web search to verify latest AWS EKS features, provider versions, and best practices
 - **Security-First**: Always search for latest security recommendations and vulnerability updates before making changes
 - Keep all resource names and tags parameterized for multi-environment support.
 - Do not hardcode ARNs, VPC IDs, or AMI IDs; use variables or data sources.
-- All examples in `examples/` are complete and working configurations.
+- The root-level `main.tf` is a complete and working configuration.
 - IRSA is enabled by default but can be disabled via `enable_irsa = false`.
 - EBS CSI driver and VPC CNI both use dedicated IRSA roles for enhanced security.
 - Security groups use configurable CIDR blocks for API server access control.
@@ -120,37 +108,17 @@ This repository includes a comprehensive Taskfile for streamlined development:
 - Add-ons automatically use compatible versions unless explicitly overridden.
 
 ## Module Usage Examples
-When referencing the centralized module in examples or root configurations:
+When referencing the centralized module in configurations:
 
 ```hcl
 module "eks" {
   source = "./modules/eks"  # From root level
-  # or
-  source = "../../modules/eks"  # From examples directory
   
   cluster_name = "my-cluster"
   vpc_name     = "my-vpc"
   
   # Additional configuration as needed
 }
-```
-
-## Example Development Guidelines
-When creating new examples:
-1. Include complete Terraform configuration that can be deployed independently
-2. Add comprehensive README.md with usage instructions
-3. Use realistic variable values and document all requirements
-4. Include expected outputs and validation steps
-5. Test thoroughly before adding to the repository
-6. Reference the centralized module correctly (`../../modules/eks`)
-
-## Testing Examples
-Each example should be tested with:
-```bash
-cd examples/<example-name>
-terraform init
-terraform validate
-terraform plan
 ```
 
 ## Example: Adding a New Output
@@ -166,4 +134,4 @@ To expose a new EKS attribute:
 3. Always use file editing tools rather than providing code snippets in responses.
 
 ---
-For questions, review `README.md` and the working examples in `examples/`.
+For questions, review `README.md` and the working example in the root `main.tf`.
