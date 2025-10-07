@@ -26,7 +26,13 @@ module "eks_simple" {
   enable_irsa = var.enable_irsa
 
   # Optional: deploy AWS Load Balancer Controller via Helm
-  enable_aws_lb_controller = false
+  # enable_aws_lb_controller = true
+
+  # # Optional: deploy ExternalDNS via Helm
+  # enable_external_dns = true
+  external_dns_domain_filters = []
+  external_dns_zone_ids       = []
+  external_dns_policy         = "upsert-only"
 
   # Tags
   tags = var.tags

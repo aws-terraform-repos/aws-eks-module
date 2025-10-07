@@ -87,3 +87,18 @@ output "vpc_cni_role_arn" {
   description = "ARN of the VPC CNI IAM role"
   value       = var.enable_irsa ? aws_iam_role.vpc_cni[0].arn : null
 }
+
+output "external_dns_role_arn" {
+  description = "ARN of the ExternalDNS IAM role"
+  value       = var.enable_irsa ? aws_iam_role.external_dns[0].arn : null
+}
+
+output "alb_controller_role_arn" {
+  description = "ARN of the AWS Load Balancer Controller IAM role"
+  value       = var.enable_irsa ? aws_iam_role.alb_controller[0].arn : null
+}
+
+output "vpc_id" {
+  description = "VPC ID used by the EKS cluster"
+  value       = local.vpc_id
+}

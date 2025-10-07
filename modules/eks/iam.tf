@@ -1,6 +1,6 @@
 # Create the policy for the EBS CSI driver (official AWS policy JSON)
 resource "aws_iam_policy" "ebs_csi_driver" {
-  name        = "AmazonEBSCSIDriverPolicy"
+  name        = "${var.cluster_name}-AmazonEBSCSIDriverPolicy"
   description = "Policy for EBS CSI Driver (automated by Terraform)"
   policy      = <<POLICY
 {
@@ -49,7 +49,7 @@ POLICY
 }
 # Create the policy for the controller (official AWS policy JSON)
 resource "aws_iam_policy" "alb_controller" {
-  name        = "AWSLoadBalancerControllerIAMPolicy"
+  name        = "${var.cluster_name}-AWSLoadBalancerControllerIAMPolicy"
   description = "Policy for AWS Load Balancer Controller (automated by Terraform)"
   policy      = <<POLICY
 {
@@ -262,6 +262,65 @@ resource "aws_iam_role_policy_attachment" "vpc_cni_policy" {
   count      = var.enable_irsa ? 1 : 0
   policy_arn = "arn:${data.aws_partition.current.partition}:iam::aws:policy/AmazonEKS_CNI_Policy"
   role       = aws_iam_role.vpc_cni[0].name
+}
+
+# ExternalDNS IAM policy and role (Route53)
+resource "aws_iam_policy" "external_dns" {
+  name        = "${var.cluster_name}-ExternalDNSRoute53Policy"
+  description = "Policy for ExternalDNS to manage Route53 records"
+  policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [
+      {
+        Effect   = "Allow",
+        Action   = ["route53:ChangeResourceRecordSets"],
+        Resource = length(var.external_dns_zone_ids) > 0 ? [for z in var.external_dns_zone_ids : "arn:${data.aws_partition.current.partition}:route53:::hostedzone/${z}"] : ["*"]
+      },
+      {
+        Effect = "Allow",
+        Action = [
+          "route53:ListHostedZones",
+          "route53:ListResourceRecordSets",
+          "route53:ListHostedZonesByName"
+        ],
+        Resource = "*"
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role" "external_dns" {
+  count = var.enable_irsa ? 1 : 0
+  name  = "${var.cluster_name}-external-dns-role"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [
+      {
+        Effect = "Allow",
+        Principal = {
+          Federated = aws_iam_openid_connect_provider.eks[0].arn
+        },
+        Action = "sts:AssumeRoleWithWebIdentity",
+        Condition = {
+          StringEquals = {
+            "${replace(aws_iam_openid_connect_provider.eks[0].url, "https://", "")}:sub" = "system:serviceaccount:kube-system:external-dns",
+            "${replace(aws_iam_openid_connect_provider.eks[0].url, "https://", "")}:aud" = "sts.amazonaws.com"
+          }
+        }
+      }
+    ]
+  })
+
+  tags = merge(var.tags, {
+    Name = "${var.cluster_name}-external-dns-role"
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "external_dns_policy_attachment" {
+  count      = var.enable_irsa ? 1 : 0
+  policy_arn = aws_iam_policy.external_dns.arn
+  role       = aws_iam_role.external_dns[0].name
 }
 
 # IAM role for EBS CSI Driver

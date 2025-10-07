@@ -141,8 +141,26 @@ variable "enable_addon_version_management" {
   default     = true
 }
 
-variable "enable_aws_lb_controller" {
-  description = "Enable deployment of the AWS Load Balancer Controller via Helm"
-  type        = bool
-  default     = false
+variable "external_dns_zone_ids" {
+  description = "List of Route53 hosted zone IDs ExternalDNS can manage; if empty, permissions apply to all zones (less secure)"
+  type        = list(string)
+  default     = []
+}
+
+variable "external_dns_domain_filters" {
+  description = "List of domain filters for ExternalDNS (e.g., example.com); empty means all domains"
+  type        = list(string)
+  default     = []
+}
+
+variable "external_dns_txt_owner_id" {
+  description = "ExternalDNS TXT owner ID used for record ownership"
+  type        = string
+  default     = null
+}
+
+variable "external_dns_policy" {
+  description = "ExternalDNS update policy (upsert-only or sync)"
+  type        = string
+  default     = "upsert-only"
 }

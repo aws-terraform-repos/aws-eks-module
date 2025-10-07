@@ -1,53 +1,6 @@
-# Wait for EKS cluster and node group to be ready before Helm release
-resource "time_sleep" "wait_for_eks" {
-  depends_on      = [aws_eks_node_group.this]
-  create_duration = "60s"
-}
 data "aws_eks_addon_version" "ebs_csi_driver" {
   addon_name         = "aws-ebs-csi-driver"
   kubernetes_version = aws_eks_cluster.this.version
-}
-
-data "aws_eks_cluster_auth" "this" {
-  name = aws_eks_cluster.this.name
-}
-
-resource "helm_release" "aws_load_balancer_controller" {
-  count      = var.enable_aws_lb_controller ? 1 : 0
-  name       = "aws-load-balancer-controller"
-  namespace  = "kube-system"
-  repository = "https://aws.github.io/eks-charts"
-  chart      = "aws-load-balancer-controller"
-  version    = "1.7.1"
-
-  set = [
-    {
-      name  = "clusterName"
-      value = aws_eks_cluster.this.name
-    },
-    {
-      name  = "region"
-      value = data.aws_region.current.name
-    },
-    {
-      name  = "serviceAccount.create"
-      value = "true"
-    },
-    {
-      name  = "serviceAccount.name"
-      value = "aws-load-balancer-controller"
-    },
-    {
-      name  = "serviceAccount.annotations.eks.amazonaws.com/role-arn"
-      value = var.enable_irsa ? aws_iam_role.alb_controller[0].arn : ""
-    }
-  ]
-
-  depends_on = [
-    aws_eks_node_group.this,
-    aws_iam_role.alb_controller,
-    time_sleep.wait_for_eks
-  ]
 }
 # Security group for EKS cluster
 resource "aws_security_group" "cluster" {
