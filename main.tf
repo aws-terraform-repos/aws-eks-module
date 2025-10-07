@@ -2,17 +2,31 @@
 module "eks_simple" {
   source = "./modules/eks"
 
-  cluster_name = "simple-eks-cluster"
-
-  # Optional: specify VPC by name if you have multiple VPCs
-  # vpc_name = "my-vpc"
-
-  # The module will automatically:
-  # - Find the default VPC if no vpc_name/vpc_tags/vpc_id specified
-  # - Find private subnets with kubernetes.io/role/internal-elb = "1" tag
-  # - Use default node group settings (t3.medium, 2 nodes)
-  # - Enable IRSA for service accounts
-  # - Configure all necessary security groups and IAM roles
+  cluster_name    = var.cluster_name
+  cluster_version = var.cluster_version
+  
+  # VPC Discovery
+  vpc_id = var.vpc_id
+  
+  # Node Group Configuration
+  node_group_instance_types = var.node_group_instance_types
+  node_group_desired_size   = var.node_group_desired_size
+  node_group_max_size       = var.node_group_max_size
+  node_group_min_size       = var.node_group_min_size
+  node_group_capacity_type  = var.node_group_capacity_type
+  node_group_ami_type       = var.node_group_ami_type
+  node_group_disk_size      = var.node_group_disk_size
+  
+  # Security Configuration
+  endpoint_private_access = var.endpoint_private_access
+  endpoint_public_access  = var.endpoint_public_access
+  public_access_cidrs     = var.public_access_cidrs
+  
+  # IRSA
+  enable_irsa = var.enable_irsa
+  
+  # Tags
+  tags = var.tags
 }
 
 # Outputs
