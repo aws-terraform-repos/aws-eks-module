@@ -16,7 +16,7 @@ echo "✅ kubectl is configured"
 echo -e "\n2. Cluster Information:"
 kubectl cluster-info
 echo ""
-kubectl version --short
+kubectl version
 
 # Check nodes
 echo -e "\n3. Checking nodes..."
@@ -35,17 +35,18 @@ aws eks describe-addon --cluster-name test-eks-cluster --addon-name aws-ebs-csi-
 
 # Deploy test applications
 echo -e "\n6. Deploying test applications..."
-kubectl apply -f test-manifests/nginx-test.yaml
-kubectl apply -f test-manifests/storage-test.yaml
+kubectl apply -f manifests/nginx-test.yaml
+kubectl apply -f manifests/storage-test.yaml
+kubectl apply -f manifests/nginx-alb-ingress.yaml
 
 # Wait for deployments
 echo -e "\n7. Waiting for deployments to be ready..."
-kubectl wait --for=condition=available --timeout=300s deployment/nginx-test -n test-app
-kubectl wait --for=condition=available --timeout=300s deployment/storage-test -n test-app
+kubectl wait --for=condition=available --timeout=300s deployment/nginx-test -n nginx
+kubectl wait --for=condition=available --timeout=300s deployment/storage-test -n nginx
 
 # Check application status
 echo -e "\n8. Checking application status..."
-kubectl get pods -n test-app -o wide
+kubectl get pods -n nginx -o wide
 
 # Test storage
 echo -e "\n9. Testing persistent storage..."
