@@ -1,3 +1,12 @@
+# Wait for EKS cluster and node group to be ready before Helm release
+resource "time_sleep" "wait_for_eks" {
+  depends_on      = [aws_eks_node_group.this]
+  create_duration = "60s"
+}
+data "aws_eks_addon_version" "ebs_csi_driver" {
+  addon_name         = "aws-ebs-csi-driver"
+  kubernetes_version = aws_eks_cluster.this.version
+}
 # Configure Kubernetes provider for EKS
 provider "kubernetes" {
   host                   = aws_eks_cluster.this.endpoint
@@ -44,7 +53,8 @@ resource "helm_release" "aws_load_balancer_controller" {
 
   depends_on = [
     aws_eks_node_group.this,
-    aws_iam_role.alb_controller
+    aws_iam_role.alb_controller,
+    time_sleep.wait_for_eks
   ]
 }
 # Security group for EKS cluster
@@ -209,6 +219,13 @@ resource "aws_eks_addon" "vpc_cni" {
   depends_on = [aws_eks_node_group.this]
 
   tags = var.tags
+
+  lifecycle {
+    ignore_changes = [
+      addon_version,
+      service_account_role_arn
+    ]
+  }
 }
 
 resource "aws_eks_addon" "kube_proxy" {
@@ -221,6 +238,12 @@ resource "aws_eks_addon" "kube_proxy" {
   depends_on = [aws_eks_node_group.this]
 
   tags = var.tags
+
+  lifecycle {
+    ignore_changes = [
+      addon_version
+    ]
+  }
 }
 
 resource "aws_eks_addon" "coredns" {
@@ -233,18 +256,30 @@ resource "aws_eks_addon" "coredns" {
   depends_on = [aws_eks_node_group.this]
 
   tags = var.tags
+
+  lifecycle {
+    ignore_changes = [
+      addon_version
+    ]
+  }
 }
 
 resource "aws_eks_addon" "ebs_csi_driver" {
   cluster_name                = aws_eks_cluster.this.name
   addon_name                  = "aws-ebs-csi-driver"
-  addon_version               = var.enable_addon_version_management ? data.aws_eks_addon_version.ebs_csi[0].version : null
+  addon_version               = data.aws_eks_addon_version.ebs_csi_driver.version
   resolve_conflicts_on_create = "OVERWRITE"
   resolve_conflicts_on_update = "OVERWRITE"
   service_account_role_arn    = var.enable_irsa ? aws_iam_role.ebs_csi_driver[0].arn : null
-
-  depends_on = [aws_eks_node_group.this]
-
-  tags = var.tags
+  depends_on = [
+    aws_iam_role.ebs_csi_driver,
+    aws_eks_node_group.this
+  ]
+  lifecycle {
+    ignore_changes = [
+      addon_version,
+      service_account_role_arn
+    ]
+  }
 }
 
