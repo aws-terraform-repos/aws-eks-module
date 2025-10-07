@@ -91,3 +91,4 @@ personal_*
 # Ignore plan files
 *.tfplan
 tfplan*
+modules/eks/.terraform.lock.hcl

@@ -1,4 +1,4 @@
-# EKS cluster deployment using the centralized module
+# EKS cluster with integrated Route53 hosted zones for DNS automation
 module "eks" {
   source = "./modules/eks"
 
@@ -6,12 +6,12 @@ module "eks" {
   cluster_name    = var.cluster_name
   cluster_version = var.cluster_version
 
-  # VPC Discovery Configuration
+  # VPC Discovery Configuration - Using name-based discovery for simplicity
   vpc_name = var.vpc_name
   vpc_tags = var.vpc_tags
   vpc_id   = var.vpc_id
 
-  # Subnet Discovery Configuration  
+  # Subnet Discovery Configuration - Default uses private subnets with ALB tag
   subnet_tags = var.subnet_tags
   subnet_ids  = var.subnet_ids
 
@@ -44,6 +44,21 @@ module "eks" {
   external_dns_domain_filters = var.external_dns_domain_filters
   external_dns_txt_owner_id   = var.external_dns_txt_owner_id
   external_dns_policy         = var.external_dns_policy
+
+  # Route53 and DNS Configuration
+  create_hosted_zones    = var.create_hosted_zones
+  hosted_zone_domains    = var.hosted_zone_domains
+  primary_domain         = var.primary_domain
+  create_subdomain_zones = var.create_subdomain_zones
+  subdomain_zones        = var.subdomain_zones
+  parent_zone_id         = var.parent_zone_id
+
+  # External DNS and Load Balancer Configuration
+  enable_load_balancer_controller = var.enable_load_balancer_controller
+  enable_external_dns             = var.enable_external_dns
+  external_dns_source             = var.external_dns_source
+  external_dns_provider           = var.external_dns_provider
+  external_dns_log_level          = var.external_dns_log_level
 
   # Tags
   tags = var.tags
@@ -133,6 +148,70 @@ output "vpc_id" {
 output "configure_kubectl" {
   description = "Command to configure kubectl"
   value       = "aws eks update-kubeconfig --region ${data.aws_region.current.name} --name ${module.eks.cluster_name}"
+}
+
+# Route53 and DNS Outputs
+output "hosted_zone_ids" {
+  description = "Map of domain names to hosted zone IDs"
+  value       = module.eks.hosted_zone_ids
+}
+
+output "hosted_zone_name_servers" {
+  description = "Map of domain names to name servers"
+  value       = module.eks.hosted_zone_name_servers
+}
+
+output "all_managed_zone_ids" {
+  description = "All zone IDs managed by this module"
+  value       = module.eks.all_managed_zone_ids
+}
+
+output "external_dns_domains" {
+  description = "All domains configured for external-dns"
+  value       = module.eks.external_dns_domains
+}
+
+output "load_balancer_controller_role_arn" {
+  description = "ARN of the AWS Load Balancer Controller IAM role"
+  value       = module.eks.load_balancer_controller_role_arn
+}
+
+# Deployment Instructions Output
+output "deployment_instructions" {
+  description = "Complete deployment instructions for DNS-enabled EKS cluster"
+  value       = var.create_hosted_zones ? "EKS cluster with DNS automation deployed successfully! Check hosted_zone_name_servers output for domain configuration, then install Helm charts manually." : "EKS cluster deployed without hosted zones. Configure external DNS manually."
+}
+
+# Helm Installation Commands Output
+output "helm_installation_commands" {
+  description = "Commands to install required Helm charts"
+  value       = <<-EOT
+# Install AWS Load Balancer Controller
+helm repo add eks https://aws.github.io/eks-charts
+helm repo update
+helm install aws-load-balancer-controller eks/aws-load-balancer-controller \
+  -n kube-system \
+  --set clusterName=${module.eks.cluster_name} \
+  --set serviceAccount.create=true \
+  --set serviceAccount.name=aws-load-balancer-controller \
+  --set serviceAccount.annotations."eks\.amazonaws\.com/role-arn"=${module.eks.load_balancer_controller_role_arn} \
+  --set region=${data.aws_region.current.name} \
+  --set vpcId=${module.eks.vpc_id}
+
+# Install ExternalDNS
+helm repo add external-dns https://kubernetes-sigs.github.io/external-dns/
+helm repo update
+helm install external-dns external-dns/external-dns \
+  -n kube-system \
+  --set serviceAccount.create=true \
+  --set serviceAccount.name=external-dns \
+  --set serviceAccount.annotations."eks\.amazonaws\.com/role-arn"=${module.eks.external_dns_role_arn} \
+  --set provider=aws \
+  --set sources='{${join(",", var.external_dns_source)}}' \
+  --set policy=${var.external_dns_policy} \
+  --set registry=txt \
+  --set txtOwnerId=${var.external_dns_txt_owner_id}
+EOT
 }
 
 # Data source to get current region

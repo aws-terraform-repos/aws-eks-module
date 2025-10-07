@@ -75,6 +75,27 @@ external_dns_domain_filters = []
 # ExternalDNS policy
 external_dns_policy = "upsert-only"  # Options: "upsert-only" or "sync"
 
+# Route53 Hosted Zone Configuration
+create_hosted_zones = false  # Set to true to create hosted zones
+
+# Example: Create hosted zones for your domains
+# hosted_zone_domains = ["example.com", "api.example.com"]
+
+# Example: Create subdomain zones under a primary domain
+# create_subdomain_zones = true
+# primary_domain = "example.com"
+# subdomain_zones = ["dev", "staging", "prod", "api"]
+# parent_zone_id = "Z1D633PJN98FT9"  # If parent zone is managed elsewhere
+
+# External DNS and Load Balancer Configuration
+enable_load_balancer_controller = true
+enable_external_dns = true
+
+# ExternalDNS Configuration
+external_dns_source = ["ingress", "service"]
+external_dns_provider = "aws"
+external_dns_log_level = "info"
+
 # Tags applied to all resources
 tags = {
   Environment = "development"

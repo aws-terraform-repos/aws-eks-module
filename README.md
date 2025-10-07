@@ -1,8 +1,8 @@
-# AWS EKS Terraform Module
+# AWS EKS Terraform Module with Route53 DNS Automation
 
-## 📁 Simplified Structure
+## 📁 Repository Structure
 
-This repository has been organized with a clean, simplified structure for better maintainability. The main EKS module is centralized in `modules/eks/` with a root-level example for immediate usage.
+This repository provides a production-ready EKS cluster with integrated Route53 hosted zones for automatic DNS management. The main EKS module is centralized in `modules/eks/` with the root configuration providing a complete DNS-enabled deployment.
 
 ```
 aws-eks-module/
@@ -12,22 +12,28 @@ aws-eks-module/
 │   ├── outputs.tf        # Module outputs
 │   ├── iam.tf           # IAM roles and policies
 │   ├── data.tf          # Data sources
+│   ├── route53.tf       # Route53 hosted zones
+│   ├── helm.tf          # Helm deployment guides
 │   └── versions.tf      # Provider requirements
-├── main.tf              # 🚀 Root-level usage example
+├── main.tf              # 🚀 Complete DNS-enabled EKS deployment
+├── manifests/           # 🎨 Sample Kubernetes manifests with DNS
+├── examples/            # 📖 Additional usage examples
 ├── README.md            # This file
 ├── TASKFILE.md          # Development workflow guide
 └── Taskfile.yml         # Task automation
 ```
 
-## 🚀 Quick Start
+## 🚀 Quick Start - DNS-Enabled EKS Cluster
 
 ### 1. Prerequisites
 
 - [Terraform](https://www.terraform.io/downloads.html) >= 1.0
 - [AWS CLI](https://aws.amazon.com/cli/) configured with appropriate permissions
-- An existing VPC with subnets (or let the module use the default VPC)
+- [Helm](https://helm.sh/docs/intro/install/) >= 3.0
+- A registered domain name for Route53 hosted zone integration
+- An existing VPC with subnets (or use the default VPC)
 
-### 2. Basic Usage
+### 2. Deploy EKS with DNS Automation
 
 1. **Clone and configure**:
    ```bash
@@ -38,23 +44,90 @@ aws-eks-module/
 
 2. **Edit terraform.tfvars** with your specific values:
    ```hcl
-   cluster_name = "my-eks-cluster"
-   vpc_name     = "my-vpc"  # or use vpc_id if you know the exact ID
+   cluster_name = "eks-dns-cluster"
+   vpc_id = "vpc-your-vpc-id"  # or use vpc_name
    public_access_cidrs = ["YOUR.IP.ADDRESS/32"]  # Important for security!
+   
+   # Route53 DNS Configuration
+   create_hosted_zones = true
+   hosted_zone_domains = ["yourdomain.com"]  # Replace with your domain
+   enable_external_dns = true
+   enable_load_balancer_controller = true
    ```
 
-3. **Deploy**:
+3. **Deploy the infrastructure**:
    ```bash
    terraform init
    terraform plan
    terraform apply
    ```
 
-4. **Configure kubectl**:
+4. **Follow post-deployment instructions**:
    ```bash
-   aws eks update-kubeconfig --region us-east-1 --name my-eks-cluster
-   kubectl get nodes
+   terraform output deployment_instructions
    ```
+
+The output will provide complete step-by-step instructions for:
+- Configuring kubectl
+- Installing ExternalDNS and AWS Load Balancer Controller via Helm
+- Updating your domain's nameservers
+- Deploying sample applications with automatic DNS
+
+## 🎯 Key Features
+
+- **🌍 Route53 Integration** - Automatic hosted zone creation and management
+- **🔄 ExternalDNS** - Automatic DNS record management for ingresses and services
+- **⚖️ Load Balancer Controller** - AWS ALB/NLB integration with Helm deployment
+- **🔍 Smart VPC/Subnet Discovery** - Multiple discovery methods (name, tags, explicit IDs)
+- **🔐 IRSA Support** - IAM Roles for Service Accounts enabled by default
+- **🛡️ Security Groups** - Pre-configured with best practices
+- **📦 EBS CSI Driver** - Auto-configured with proper IAM permissions
+- **🌐 VPC CNI Enhancement** - Dedicated IRSA role for network security
+- **📊 Add-on Management** - Automatic version management with conflict resolution
+- **🔧 Flexible Configuration** - Three approaches for VPC/subnet selection
+
+## 🌍 DNS Automation Workflow
+
+1. **Deploy Infrastructure** → Creates EKS cluster + Route53 hosted zones + IAM roles
+2. **Update Domain Registrar** → Point your domain to the provided name servers  
+3. **Install Helm Charts** → ExternalDNS + AWS Load Balancer Controller
+4. **Deploy Applications** → Ingress resources automatically get DNS records
+5. **Automatic Management** → DNS records created/updated/deleted automatically
+
+## 📋 Root Configuration Example
+
+The root `main.tf` provides a complete DNS-enabled EKS deployment. Here's what it includes:
+
+```hcl
+# Complete EKS cluster with DNS automation
+module "eks" {
+  source = "./modules/eks"
+
+  # Basic cluster configuration
+  cluster_name    = "eks-dns-cluster"
+  cluster_version = "1.32"
+  vpc_id          = "vpc-your-vpc-id"
+
+  # Route53 DNS automation
+  create_hosted_zones    = true
+  hosted_zone_domains    = ["yourdomain.com"]
+  create_subdomain_zones = true
+  subdomain_zones        = ["dev", "staging", "prod", "api"]
+
+  # Enable DNS controllers
+  enable_external_dns             = true
+  enable_load_balancer_controller = true
+
+  # Security configuration
+  public_access_cidrs = ["your-ip/32"]
+  enable_irsa = true
+
+  tags = {
+    Environment = "production"
+    Project     = "dns-automation"
+  }
+}
+```
 
 ### Using the Module in Other Projects
 
@@ -64,6 +137,10 @@ module "eks" {
   
   cluster_name = "my-eks-cluster"
   vpc_name     = "my-vpc"
+  
+  # Route53 Integration
+  create_hosted_zones = true
+  hosted_zone_domains = ["example.com"]
   
   # Override defaults as needed
   node_group_instance_types = ["t3.large"]

@@ -164,3 +164,83 @@ variable "external_dns_policy" {
   type        = string
   default     = "upsert-only"
 }
+
+# Route53 Hosted Zone Configuration
+variable "create_hosted_zones" {
+  description = "Whether to create Route53 hosted zones for external-dns"
+  type        = bool
+  default     = false
+}
+
+variable "hosted_zone_domains" {
+  description = "List of domain names to create hosted zones for (e.g., ['example.com', 'app.example.com'])"
+  type        = list(string)
+  default     = []
+}
+
+variable "primary_domain" {
+  description = "Primary domain for subdomain zone creation (e.g., 'example.com')"
+  type        = string
+  default     = null
+}
+
+variable "create_subdomain_zones" {
+  description = "Whether to create subdomain hosted zones under the primary domain"
+  type        = bool
+  default     = false
+}
+
+variable "subdomain_zones" {
+  description = "List of subdomain prefixes to create zones for (e.g., ['dev', 'staging', 'api'])"
+  type        = list(string)
+  default     = []
+}
+
+variable "parent_zone_id" {
+  description = "Parent zone ID for creating NS records (if managing subdomains under external parent)"
+  type        = string
+  default     = null
+}
+
+variable "enable_load_balancer_controller" {
+  description = "Whether to enable AWS Load Balancer Controller IRSA role"
+  type        = bool
+  default     = true
+}
+
+variable "load_balancer_controller_chart_version" {
+  description = "Helm chart version for AWS Load Balancer Controller"
+  type        = string
+  default     = null
+}
+
+variable "enable_external_dns" {
+  description = "Whether to enable ExternalDNS IRSA role"
+  type        = bool
+  default     = true
+}
+
+variable "external_dns_chart_version" {
+  description = "Helm chart version for ExternalDNS"
+  type        = string
+  default     = null
+}
+
+# Enhanced ExternalDNS configuration
+variable "external_dns_source" {
+  description = "ExternalDNS source types (ingress, service, etc.)"
+  type        = list(string)
+  default     = ["ingress", "service"]
+}
+
+variable "external_dns_provider" {
+  description = "ExternalDNS DNS provider"
+  type        = string
+  default     = "aws"
+}
+
+variable "external_dns_log_level" {
+  description = "ExternalDNS log level"
+  type        = string
+  default     = "info"
+}

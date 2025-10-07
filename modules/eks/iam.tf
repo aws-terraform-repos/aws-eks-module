@@ -265,6 +265,7 @@ resource "aws_iam_role_policy_attachment" "vpc_cni_policy" {
 }
 
 # ExternalDNS IAM policy and role (Route53)
+# Enhanced ExternalDNS IAM policy with hosted zone support
 resource "aws_iam_policy" "external_dns" {
   name        = "${var.cluster_name}-ExternalDNSRoute53Policy"
   description = "Policy for ExternalDNS to manage Route53 records"
@@ -274,18 +275,32 @@ resource "aws_iam_policy" "external_dns" {
       {
         Effect   = "Allow",
         Action   = ["route53:ChangeResourceRecordSets"],
-        Resource = length(var.external_dns_zone_ids) > 0 ? [for z in var.external_dns_zone_ids : "arn:${data.aws_partition.current.partition}:route53:::hostedzone/${z}"] : ["*"]
+        Resource = length(local.all_zone_ids) > 0 ? [
+          for zone_id in local.all_zone_ids : "arn:${data.aws_partition.current.partition}:route53:::hostedzone/${zone_id}"
+        ] : ["*"]
       },
       {
         Effect = "Allow",
         Action = [
           "route53:ListHostedZones",
           "route53:ListResourceRecordSets",
-          "route53:ListHostedZonesByName"
+          "route53:ListTagsForResource",
+          "route53:GetHostedZone"
         ],
         Resource = "*"
+      },
+      {
+        Effect = "Allow",
+        Action = [
+          "route53:GetChange"
+        ],
+        Resource = "arn:${data.aws_partition.current.partition}:route53:::change/*"
       }
     ]
+  })
+
+  tags = merge(var.tags, {
+    Name = "${var.cluster_name}-external-dns-policy"
   })
 }
 

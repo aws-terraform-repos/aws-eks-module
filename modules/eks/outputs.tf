@@ -102,3 +102,35 @@ output "vpc_id" {
   description = "VPC ID used by the EKS cluster"
   value       = local.vpc_id
 }
+
+# Route53 Hosted Zone Outputs
+output "hosted_zone_ids" {
+  description = "Map of domain names to hosted zone IDs"
+  value = merge(
+    { for domain, zone in aws_route53_zone.cluster_zones : domain => zone.zone_id },
+    { for subdomain, zone in aws_route53_zone.cluster_subdomains : "${subdomain}.${var.primary_domain}" => zone.zone_id }
+  )
+}
+
+output "hosted_zone_name_servers" {
+  description = "Map of domain names to name servers"
+  value = merge(
+    { for domain, zone in aws_route53_zone.cluster_zones : domain => zone.name_servers },
+    { for subdomain, zone in aws_route53_zone.cluster_subdomains : "${subdomain}.${var.primary_domain}" => zone.name_servers }
+  )
+}
+
+output "all_managed_zone_ids" {
+  description = "All zone IDs managed by this module (created + external)"
+  value       = local.all_zone_ids
+}
+
+output "external_dns_domains" {
+  description = "All domains configured for external-dns"
+  value       = local.all_domains
+}
+
+output "load_balancer_controller_role_arn" {
+  description = "ARN of the AWS Load Balancer Controller IAM role (alias for backward compatibility)"
+  value       = var.enable_irsa && var.enable_load_balancer_controller ? aws_iam_role.alb_controller[0].arn : null
+}
