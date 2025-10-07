@@ -1,6 +1,23 @@
 # AWS EKS Module Task Runner
 
-This Taskfile provides a standardized way to test, validate, and manage the AWS EKS Terraform module and its examples.
+This Taskfile provides a standardized way to test, validate, and manage the AWS EKS### Maintenance Tasks
+
+```bash
+# Initialize all modules and examples
+task init-all
+
+# Clean all state files and caches
+task clean
+
+# Format all files
+task format
+
+# Run security scan
+task security-scan
+
+# Estimate costs
+task cost-estimate
+```and its examples.
 
 ## Prerequisites
 
@@ -58,6 +75,22 @@ This Taskfile provides a standardized way to test, validate, and manage the AWS 
    ```bash
    task test-all
    ```
+
+## Repository Structure
+
+This repository uses a centralized module structure:
+
+```
+aws-eks-module/
+├── modules/eks/          # 🎯 Main EKS module (centralized)
+├── examples/             # 📚 Complete usage examples
+│   ├── simple-cluster/   # Minimal configuration
+│   ├── vpc-name-discovery/  # VPC discovery by name
+│   ├── tag-based-discovery/ # Discovery by custom tags
+│   └── explicit-ids/     # Explicit resource IDs
+├── main.tf              # 🚀 Root-level usage example
+└── Taskfile.yml         # Task automation
+```
 
 ## Common Workflows
 
@@ -192,7 +225,8 @@ cp examples/simple-cluster/terraform.tfvars.example examples/simple-cluster/terr
 
 - Run `task help` for detailed workflow guidance
 - Check individual example READMEs in `examples/*/README.md`
-- Review the main module README in the repository root
+- Review the main module documentation in `modules/eks/`
+- Review the main repository README in the repository root
 
 ## CI/CD Integration
 
@@ -232,6 +266,24 @@ Task supports parallel execution for independent operations:
 task validate-examples
 ```
 
+### Working with the Centralized Module
+
+The main EKS module is located in `modules/eks/`. When working on the module itself:
+
+```bash
+# Validate the main module
+cd modules/eks
+terraform validate
+
+# Format the main module
+cd modules/eks
+terraform fmt
+
+# Or use tasks from the root
+task validate  # validates modules/eks/
+task format    # formats all files including modules/eks/
+```
+
 ## Security Best Practices
 
 1. **Always restrict API access**: Set `public_access_cidrs` to your IP
@@ -240,6 +292,24 @@ task validate-examples
 4. **Clean up**: Use destroy tasks to clean up test resources
 5. **Scan for security issues**: Use `task security-scan` regularly
 
+## Module Development
+
+When developing the centralized module (`modules/eks/`):
+
+1. **Make changes in `modules/eks/`**: All module logic is centralized here
+2. **Test with examples**: Use the examples to test your module changes
+3. **Update documentation**: Keep module outputs and variables documented
+4. **Validate thoroughly**: Run `task test-all` before committing changes
+
+## Example Development
+
+When creating new examples:
+
+1. **Reference the centralized module**: Always use `source = "../../modules/eks"`
+2. **Include complete configuration**: Examples should be deployable independently
+3. **Add comprehensive README**: Document the specific use case and configuration
+4. **Test thoroughly**: Validate and plan before adding to repository
+
 ---
 
-For more information, see the main [README.md](../README.md) and [Copilot Instructions](../.github/copilot-instructions.md).
+For more information, see the main [README.md](README.md) and [Copilot Instructions](.github/copilot-instructions.md).

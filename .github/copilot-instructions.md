@@ -1,5 +1,20 @@
 # Copilot Instructions
 
+## Code Modification Guidelines
+- **Always edit files directly**: When code changes are needed, use file editing tools to make actual changes to the codebase
+- **Never provide code snippets in chat**: Instead of showing code in responses, create or modify files using appropriate tools
+- **Use multi-file operations**: When multiple files need updates, use batch editing tools for efficiency
+- **Validate changes**: After making code changes, run validation commands to ensure correctness
+- **Create working examples**: When demonstrating usage, create actual example files rather than showing inline code
+
+## Research and Information Guidelines
+- **Use internet search tools**: Always search for the latest information, best practices, and current versions
+- **Verify current versions**: Check for the latest EKS, Terraform provider, and add-on versions before making recommendations
+- **Stay updated on AWS changes**: Research recent AWS EKS updates, new features, and deprecation notices
+- **Reference official documentation**: Use web search to find and reference the most current AWS and Terraform documentation
+- **Check for security updates**: Search for latest security best practices and vulnerability information
+- **Validate compatibility**: Research compatibility between different component versions before implementing
+
 ## Key Features
 - **VPC Discovery**: Module can automatically discover VPC by name tag or custom tags, or accept explicit VPC ID
 - **Subnet Discovery**: Module can automatically discover subnets by tags (default: kubernetes.io/role/internal-elb), or accept explicit subnet IDs
@@ -11,16 +26,38 @@
 - **Flexible Configuration**: Three approaches for VPC/subnet selection to fit different use cases
 
 ## Overview
-This repository defines a reusable Terraform module for provisioning AWS EKS (Elastic Kubernetes Service) clusters. The codebase is organized for clarity and modularity, supporting customization via variables and outputs.
+This repository defines a reusable Terraform module for provisioning AWS EKS (Elastic Kubernetes Service) clusters. The codebase is organized with a centralized module structure for clarity and modularity, supporting customization via variables and outputs.
+
+## Repository Structure
+```
+aws-eks-module/
+├── modules/eks/          # 🎯 Main EKS module (centralized)
+│   ├── main.tf          # Core EKS resources, security groups, and add-ons
+│   ├── variables.tf     # All module input variables
+│   ├── outputs.tf       # Module outputs for consumers
+│   ├── iam.tf          # IAM roles, policies, and IRSA configuration
+│   ├── data.tf         # Data sources for VPC/subnet discovery and add-on versions
+│   └── versions.tf     # Provider version constraints
+├── examples/            # 📚 Complete usage examples
+│   ├── simple-cluster/  # Minimal configuration for quick deployment
+│   ├── vpc-name-discovery/  # VPC discovery by name tag
+│   ├── tag-based-discovery/ # VPC and subnet discovery by custom tags
+│   └── explicit-ids/    # Explicit VPC and subnet IDs for maximum control
+├── main.tf             # 🚀 Root-level usage example
+├── README.md           # Main documentation
+├── TASKFILE.md         # Development workflow guide
+└── Taskfile.yml        # Task automation
+```
 
 ## Key Files & Structure
-- `main.tf`: Core logic for EKS cluster provisioning, including resource definitions and add-ons.
-- `variables.tf`: Declares all configurable variables for the module.
-- `outputs.tf`: Exposes key outputs (e.g., cluster name, endpoint, IRSA role ARNs).
-- `iam.tf`: IAM roles and policies required for EKS, worker nodes, and service accounts.
-- `data.tf`: Data sources for dynamic lookups (e.g., AMIs, VPCs, add-on versions).
-- `versions.tf`: Provider requirements and version constraints.
-- `examples/`: Complete working examples demonstrating different usage patterns.
+- **`modules/eks/main.tf`**: Core logic for EKS cluster provisioning, including resource definitions and add-ons.
+- **`modules/eks/variables.tf`**: Declares all configurable variables for the module.
+- **`modules/eks/outputs.tf`**: Exposes key outputs (e.g., cluster name, endpoint, IRSA role ARNs).
+- **`modules/eks/iam.tf`**: IAM roles and policies required for EKS, worker nodes, and service accounts.
+- **`modules/eks/data.tf`**: Data sources for dynamic lookups (e.g., AMIs, VPCs, add-on versions).
+- **`modules/eks/versions.tf`**: Provider requirements and version constraints.
+- **`examples/`**: Complete working examples demonstrating different usage patterns.
+- **`main.tf`**: Root-level example showing how to use the centralized module.
 
 ## Examples Structure
 - **simple-cluster/**: Minimal configuration for quick deployment
@@ -29,25 +66,30 @@ This repository defines a reusable Terraform module for provisioning AWS EKS (El
 - **explicit-ids/**: Explicit VPC and subnet IDs for maximum control
 
 ## Patterns & Conventions
-- **Module Usage**: The root directory is the module; the `examples/` folder contains complete usage examples.
+- **Module Usage**: The centralized module is in `modules/eks/`; the `examples/` folder contains complete usage examples.
 - **VPC Discovery**: Supports three methods - by name tag, by custom tags, or explicit IDs for flexibility
 - **Subnet Discovery**: Uses tags to find appropriate subnets (default: private subnets with kubernetes.io/role/internal-elb)
-- **Variable Naming**: Follows Terraform snake_case. Required variables are documented in `variables.tf`.
+- **Variable Naming**: Follows Terraform snake_case. Required variables are documented in `modules/eks/variables.tf`.
 - **Outputs**: Only expose values needed by consumers; keep outputs minimal and meaningful.
-- **IAM**: All IAM resources are isolated in `iam.tf` for clarity and reuse.
-- **Data Sources**: Use `data.tf` for all lookups to keep logic DRY and maintainable.
+- **IAM**: All IAM resources are isolated in `modules/eks/iam.tf` for clarity and reuse.
+- **Data Sources**: Use `modules/eks/data.tf` for all lookups to keep logic DRY and maintainable.
 - **IRSA Support**: Module includes IAM Roles for Service Accounts (IRSA) for secure pod-to-AWS communication.
 - **Security Groups**: Dedicated security groups with configurable CIDR restrictions and optional SSH access.
 - **Add-on Management**: Automatic version management with proper conflict resolution.
 
 ## Developer Workflows
+- **File-First Approach**: Always make changes directly to files using editing tools rather than showing code
+- **Research-Driven Development**: Use web search to verify current best practices, versions, and compatibility before implementing
 - **Task Runner**: Use `task test-all` for complete validation (requires [Task](https://taskfile.dev/))
-- **Initialize**: `terraform init`
+- **Direct Editing**: Use file editing tools to modify configurations, variables, and resources
+- **Batch Operations**: When multiple files need changes, use multi-file editing tools for efficiency
+- **Validation**: After file changes, run `terraform validate` and `terraform plan` to verify correctness
+- **Version Verification**: Always check for latest provider and add-on versions using web search
+- **Initialize**: `terraform init` (in module or example directory)
 - **Plan**: `terraform plan -var-file=yourvars.tfvars`
 - **Apply**: `terraform apply -var-file=yourvars.tfvars`
 - **Destroy**: `terraform destroy -var-file=yourvars.tfvars`
-- **Validate**: `terraform validate`
-- **Format**: `terraform fmt`
+- **Format**: `terraform fmt` (or use task runner for batch formatting)
 
 ## Taskfile Usage
 This repository includes a comprehensive Taskfile for streamlined development:
@@ -63,6 +105,11 @@ This repository includes a comprehensive Taskfile for streamlined development:
 - **IAM**: Integrates with AWS IAM for RBAC and node permissions.
 
 ## Project-Specific Notes
+- **File-First Development**: Always create or edit actual files rather than providing code examples in chat
+- **Direct Implementation**: When users request code changes, implement them directly in the appropriate files
+- **Real Examples**: Create working example files in the `examples/` directory rather than showing inline code
+- **Research Before Implementation**: Use web search to verify latest AWS EKS features, provider versions, and best practices
+- **Security-First**: Always search for latest security recommendations and vulnerability updates before making changes
 - Keep all resource names and tags parameterized for multi-environment support.
 - Do not hardcode ARNs, VPC IDs, or AMI IDs; use variables or data sources.
 - All examples in `examples/` are complete and working configurations.
@@ -72,6 +119,22 @@ This repository includes a comprehensive Taskfile for streamlined development:
 - SSH access to worker nodes is disabled by default for security.
 - Add-ons automatically use compatible versions unless explicitly overridden.
 
+## Module Usage Examples
+When referencing the centralized module in examples or root configurations:
+
+```hcl
+module "eks" {
+  source = "./modules/eks"  # From root level
+  # or
+  source = "../../modules/eks"  # From examples directory
+  
+  cluster_name = "my-cluster"
+  vpc_name     = "my-vpc"
+  
+  # Additional configuration as needed
+}
+```
+
 ## Example Development Guidelines
 When creating new examples:
 1. Include complete Terraform configuration that can be deployed independently
@@ -79,6 +142,7 @@ When creating new examples:
 3. Use realistic variable values and document all requirements
 4. Include expected outputs and validation steps
 5. Test thoroughly before adding to the repository
+6. Reference the centralized module correctly (`../../modules/eks`)
 
 ## Testing Examples
 Each example should be tested with:
@@ -91,7 +155,7 @@ terraform plan
 
 ## Example: Adding a New Output
 To expose a new EKS attribute:
-1. Add the output in `outputs.tf`:
+1. Edit the file `modules/eks/outputs.tf` directly using file editing tools to add:
    ```hcl
    output "cluster_version" {
      description = "The Kubernetes version for the cluster"
@@ -99,6 +163,7 @@ To expose a new EKS attribute:
    }
    ```
 2. Reference it in your consumer configuration as `module.eks.cluster_version`.
+3. Always use file editing tools rather than providing code snippets in responses.
 
 ---
 For questions, review `README.md` and the working examples in `examples/`.
