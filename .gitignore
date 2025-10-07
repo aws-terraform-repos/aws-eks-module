@@ -87,3 +87,4 @@ docs/generated/
 # Ignore any local scripts that might contain sensitive data
 local_*
 personal_*
+.terraform.lock.hcl
