@@ -273,8 +273,8 @@ resource "aws_iam_policy" "external_dns" {
     Version = "2012-10-17",
     Statement = [
       {
-        Effect   = "Allow",
-        Action   = ["route53:ChangeResourceRecordSets"],
+        Effect = "Allow",
+        Action = ["route53:ChangeResourceRecordSets"],
         Resource = length(local.all_zone_ids) > 0 ? [
           for zone_id in local.all_zone_ids : "arn:${data.aws_partition.current.partition}:route53:::hostedzone/${zone_id}"
         ] : ["*"]
