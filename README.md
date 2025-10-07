@@ -1,31 +1,81 @@
 # AWS EKS Terraform Module
 
-This Terraform module creates an Amazon EKS (Elastic Kubernetes Service) cluster with managed node groups and essential add-ons.
+## 📁 New Centralized Structure
 
-## Features
+This repository has been reorganized for better debugging and maintenance. The main EKS module is now located in `modules/eks/` with a clean separation between the module code and usage examples.
 
-- **EKS Cluster**: Configurable Kubernetes version with automatic platform version management
-- **Managed Node Groups**: Auto-scaling worker nodes with configurable instance types and capacity
-- **Essential EKS Add-ons**: VPC CNI, CoreDNS, kube-proxy, and EBS CSI driver with automatic version management
-- **IRSA Support**: IAM Roles for Service Accounts for secure pod-to-AWS service communication
-- **Enhanced Security**: Dedicated security groups with proper ingress/egress rules and optional SSH access
-- **VPC Discovery**: Flexible VPC and subnet discovery by name, tags, or explicit IDs
-- **CloudWatch Logging**: Control plane logging for monitoring and troubleshooting
-- **Comprehensive Outputs**: All necessary outputs for integration with other infrastructure
-- **CIDR Restrictions**: Configurable endpoint access and public access CIDR blocks
-- **Production Ready**: Following AWS best practices with least privilege IAM roles
+```
+aws-eks-module/
+├── modules/eks/           # 🎯 Main EKS module (centralized)
+│   ├── main.tf           # Core EKS resources
+│   ├── variables.tf      # Module variables
+│   ├── outputs.tf        # Module outputs
+│   ├── iam.tf           # IAM roles and policies
+│   ├── data.tf          # Data sources
+│   └── versions.tf      # Provider requirements
+├── examples/             # 📚 Usage examples
+│   ├── simple-cluster/   # Minimal configuration
+│   ├── vpc-name-discovery/
+│   ├── tag-based-discovery/
+│   └── explicit-ids/
+├── main.tf              # 🚀 Root-level usage example
+├── README.md            # This file
+├── TASKFILE.md          # Development workflow guide
+└── Taskfile.yml         # Task automation
+```
 
-## Usage
+## 🚀 Quick Start
 
-The module supports three different approaches for VPC and subnet discovery:
+### Using the Centralized Module
+
+```hcl
+module "eks" {
+  source = "./modules/eks"
+  
+  cluster_name = "my-eks-cluster"
+  vpc_name     = "my-vpc"
+  
+  # Module will auto-discover subnets and configure everything
+}
+```
+
+### From External Repository
+
+```hcl
+module "eks" {
+  source = "git::https://github.com/aws-terraform-repos/aws-eks-module.git//modules/eks"
+  
+  cluster_name = "my-eks-cluster"
+  vpc_name     = "my-vpc"
+}
+```
+
+## 🎯 Key Features
+
+- **🔍 Smart VPC/Subnet Discovery** - Multiple discovery methods
+- **🔐 IRSA Support** - IAM Roles for Service Accounts enabled by default
+- **🛡️ Security Groups** - Pre-configured with best practices
+- **📦 EBS CSI Driver** - Auto-configured with proper IAM permissions
+- **🌐 VPC CNI Enhancement** - Dedicated IRSA role for network security
+- **📊 Add-on Management** - Automatic version management
+- **🔧 Flexible Configuration** - Three approaches for VPC/subnet selection
+
+## 📖 Usage Examples
+
+All examples have been updated to reference the centralized module:
+
+- **[Simple Cluster](examples/simple-cluster/)** - Minimal configuration
+- **[VPC Name Discovery](examples/vpc-name-discovery/)** - Find VPC by name tag  
+- **[Tag-based Discovery](examples/tag-based-discovery/)** - Find VPC/subnets by custom tags
+- **[Explicit IDs](examples/explicit-ids/)** - Specify exact VPC/subnet IDs
 
 ### Option 1: VPC Discovery by Name (Recommended)
 ```hcl
 module "eks" {
-  source = "path/to/this/module"
+  source = "./modules/eks"
 
   cluster_name    = "my-eks-cluster"
-  cluster_version = "1.28"
+  cluster_version = "1.32"
   
   # Discover VPC by name tag
   vpc_name = "my-vpc"

@@ -1,8 +1,8 @@
 # Tag-Based Discovery Example
 # This example shows how to discover VPC and subnets using custom tags
 
-module "eks" {
-  source = "../../"
+module "eks_tag_discovery" {
+  source = "../../modules/eks"
 
   cluster_name = "tag-based-eks-cluster"
 

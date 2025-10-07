@@ -1,8 +1,8 @@
 # Explicit IDs Example
 # This example shows how to deploy an EKS cluster using explicit VPC and subnet IDs
 
-module "eks" {
-  source = "../../"
+module "eks_explicit" {
+  source = "../../modules/eks"
 
   cluster_name = "explicit-ids-eks-cluster"
 

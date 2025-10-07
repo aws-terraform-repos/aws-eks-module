@@ -1,8 +1,8 @@
 # VPC Name Discovery Example
 # This example shows how to deploy an EKS cluster by specifying a VPC by its name tag.
 
-module "eks" {
-  source = "../../"
+module "eks_vpc_name" {
+  source = "../../modules/eks"
 
   cluster_name = "vpc-name-eks-cluster"
   vpc_name     = "my-production-vpc" # Replace with your VPC's Name tag

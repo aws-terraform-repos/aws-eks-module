@@ -7,15 +7,6 @@ data "aws_eks_addon_version" "ebs_csi_driver" {
   addon_name         = "aws-ebs-csi-driver"
   kubernetes_version = aws_eks_cluster.this.version
 }
-# Configure Kubernetes provider for EKS
-provider "kubernetes" {
-  host                   = aws_eks_cluster.this.endpoint
-  cluster_ca_certificate = base64decode(aws_eks_cluster.this.certificate_authority[0].data)
-  token                  = data.aws_eks_cluster_auth.this.token
-}
-
-# Helm provider for AWS Load Balancer Controller
-provider "helm" {}
 
 data "aws_eks_cluster_auth" "this" {
   name = aws_eks_cluster.this.name
@@ -193,6 +184,11 @@ resource "aws_eks_node_group" "this" {
     max_unavailable = 1
   }
 
+  remote_access {
+    ec2_ssh_key               = var.enable_ssh_access ? var.ssh_key_name : null
+    source_security_group_ids = var.enable_ssh_access ? [aws_security_group.node_group.id] : null
+  }
+
   ami_type       = var.node_group_ami_type
   capacity_type  = var.node_group_capacity_type
   disk_size      = var.node_group_disk_size
@@ -282,4 +278,3 @@ resource "aws_eks_addon" "ebs_csi_driver" {
     ]
   }
 }
-

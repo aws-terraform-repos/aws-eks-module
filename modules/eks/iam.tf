@@ -311,4 +311,3 @@ resource "aws_iam_openid_connect_provider" "eks" {
     Name = "${var.cluster_name}-eks-irsa"
   })
 }
-

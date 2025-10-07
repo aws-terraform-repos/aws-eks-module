@@ -129,6 +129,12 @@ variable "ssh_access_cidrs" {
   default     = []
 }
 
+variable "ssh_key_name" {
+  description = "EC2 Key Pair name for SSH access to worker nodes"
+  type        = string
+  default     = null
+}
+
 variable "enable_addon_version_management" {
   description = "Enable version management for EKS add-ons"
   type        = bool
