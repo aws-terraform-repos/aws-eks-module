@@ -1,7 +1,3 @@
-data "aws_eks_addon_version" "ebs_csi_driver" {
-  addon_name         = "aws-ebs-csi-driver"
-  kubernetes_version = aws_eks_cluster.this.version
-}
 # Security group for EKS cluster
 resource "aws_security_group" "cluster" {
   name        = "${var.cluster_name}-cluster-sg"
@@ -220,7 +216,7 @@ resource "aws_eks_addon" "coredns" {
 resource "aws_eks_addon" "ebs_csi_driver" {
   cluster_name                = aws_eks_cluster.this.name
   addon_name                  = "aws-ebs-csi-driver"
-  addon_version               = data.aws_eks_addon_version.ebs_csi_driver.version
+  addon_version               = var.enable_addon_version_management ? data.aws_eks_addon_version.ebs_csi_driver[0].version : null
   resolve_conflicts_on_create = "OVERWRITE"
   resolve_conflicts_on_update = "OVERWRITE"
   service_account_role_arn    = var.enable_irsa ? aws_iam_role.ebs_csi_driver[0].arn : null

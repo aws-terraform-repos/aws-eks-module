@@ -57,7 +57,7 @@ data "aws_eks_addon_version" "coredns" {
   most_recent        = true
 }
 
-data "aws_eks_addon_version" "ebs_csi" {
+data "aws_eks_addon_version" "ebs_csi_driver" {
   count              = var.enable_addon_version_management ? 1 : 0
   addon_name         = "aws-ebs-csi-driver"
   kubernetes_version = var.cluster_version

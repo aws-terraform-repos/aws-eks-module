@@ -21,27 +21,58 @@ aws-eks-module/
 
 ## 🚀 Quick Start
 
-### Using the Module
+### 1. Prerequisites
+
+- [Terraform](https://www.terraform.io/downloads.html) >= 1.0
+- [AWS CLI](https://aws.amazon.com/cli/) configured with appropriate permissions
+- An existing VPC with subnets (or let the module use the default VPC)
+
+### 2. Basic Usage
+
+1. **Clone and configure**:
+   ```bash
+   git clone <repository-url>
+   cd aws-eks-module
+   cp terraform.tfvars.example terraform.tfvars
+   ```
+
+2. **Edit terraform.tfvars** with your specific values:
+   ```hcl
+   cluster_name = "my-eks-cluster"
+   vpc_name     = "my-vpc"  # or use vpc_id if you know the exact ID
+   public_access_cidrs = ["YOUR.IP.ADDRESS/32"]  # Important for security!
+   ```
+
+3. **Deploy**:
+   ```bash
+   terraform init
+   terraform plan
+   terraform apply
+   ```
+
+4. **Configure kubectl**:
+   ```bash
+   aws eks update-kubeconfig --region us-east-1 --name my-eks-cluster
+   kubectl get nodes
+   ```
+
+### Using the Module in Other Projects
 
 ```hcl
 module "eks" {
-  source = "./modules/eks"
+  source = "git::https://github.com/your-org/aws-eks-module.git//modules/eks"
   
   cluster_name = "my-eks-cluster"
   vpc_name     = "my-vpc"
   
-  # Module will auto-discover subnets and configure everything
-}
-```
-
-### From External Repository
-
-```hcl
-module "eks" {
-  source = "git::https://github.com/aws-terraform-repos/aws-eks-module.git//modules/eks"
+  # Override defaults as needed
+  node_group_instance_types = ["t3.large"]
+  public_access_cidrs       = ["203.0.113.0/32"]
   
-  cluster_name = "my-eks-cluster"
-  vpc_name     = "my-vpc"
+  tags = {
+    Environment = "production"
+    Project     = "my-project"
+  }
 }
 ```
 
@@ -82,7 +113,7 @@ module "eks" {
   public_access_cidrs    = ["10.0.0.0/16"]
   
   node_group_capacity_type = "ON_DEMAND"
-  node_group_ami_type     = "AL2_x86_64"
+  node_group_ami_type     = "AL2023_x86_64_STANDARD"  # Required for K8s 1.32+
   node_group_disk_size    = 20
   
   enable_irsa = true
