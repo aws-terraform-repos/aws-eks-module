@@ -1,3 +1,52 @@
+# Configure Kubernetes provider for EKS
+provider "kubernetes" {
+  host                   = aws_eks_cluster.this.endpoint
+  cluster_ca_certificate = base64decode(aws_eks_cluster.this.certificate_authority[0].data)
+  token                  = data.aws_eks_cluster_auth.this.token
+}
+
+# Helm provider for AWS Load Balancer Controller
+provider "helm" {}
+
+data "aws_eks_cluster_auth" "this" {
+  name = aws_eks_cluster.this.name
+}
+
+resource "helm_release" "aws_load_balancer_controller" {
+  name       = "aws-load-balancer-controller"
+  namespace  = "kube-system"
+  repository = "https://aws.github.io/eks-charts"
+  chart      = "aws-load-balancer-controller"
+  version    = "1.7.1"
+
+  set = [
+    {
+      name  = "clusterName"
+      value = aws_eks_cluster.this.name
+    },
+    {
+      name  = "region"
+      value = data.aws_region.current.name
+    },
+    {
+      name  = "serviceAccount.create"
+      value = "true"
+    },
+    {
+      name  = "serviceAccount.name"
+      value = "aws-load-balancer-controller"
+    },
+    {
+      name  = "serviceAccount.annotations.eks.amazonaws.com/role-arn"
+      value = var.enable_irsa ? aws_iam_role.alb_controller[0].arn : ""
+    }
+  ]
+
+  depends_on = [
+    aws_eks_node_group.this,
+    aws_iam_role.alb_controller
+  ]
+}
 # Security group for EKS cluster
 resource "aws_security_group" "cluster" {
   name        = "${var.cluster_name}-cluster-sg"
@@ -142,14 +191,11 @@ resource "aws_eks_node_group" "this" {
   # Ensure that IAM Role permissions are created before and deleted after EKS Node Group handling.
   depends_on = [
     aws_iam_role_policy_attachment.node_group_AmazonEKSWorkerNodePolicy,
-    aws_iam_role_policy_attachment.node_group_AmazonEKS_CNI_Policy,
-    aws_iam_role_policy_attachment.node_group_AmazonEC2ContainerRegistryReadOnly,
+    aws_iam_role_policy_attachment.node_group_AmazonEKS_CNI_Policy
   ]
-
-  tags = merge(var.tags, {
-    Name = "${var.cluster_name}-node-group"
-  })
 }
+
+
 
 # EKS Add-ons
 resource "aws_eks_addon" "vpc_cni" {

@@ -14,7 +14,7 @@ node_group_max_size       = 4
 node_group_min_size       = 1
 
 # Security configuration (restrict API access to your IP)
-public_access_cidrs = ["YOUR_IP/32"]  # Replace with your actual IP
+public_access_cidrs = ["0.0.0.0/0"]  # Open to all for testing; restrict in production
 
 # Optional: Enable SSH access for debugging (not recommended for production)
 # enable_ssh_access = true
