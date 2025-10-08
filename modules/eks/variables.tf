@@ -40,9 +40,14 @@ variable "subnet_ids" {
 }
 
 variable "node_group_instance_types" {
-  description = "Instance types for the EKS node group"
+  description = "Instance types for the EKS node group. Must be EKS-compatible types. Spot pricing will be automatically queried for cost optimization."
   type        = list(string)
-  default     = ["t3.medium"]
+  default     = ["t3.medium", "t3a.medium", "m5.large"]
+
+  validation {
+    condition     = length(var.node_group_instance_types) > 0
+    error_message = "At least one instance type must be specified for the node group."
+  }
 }
 
 variable "node_group_desired_size" {
@@ -262,4 +267,28 @@ variable "wait_for_ready" {
   description = "Whether to wait for Helm deployments to be ready"
   type        = bool
   default     = true
+}
+
+# Spot Instance Configuration
+variable "enable_spot_price_optimization" {
+  description = "Enable automatic spot price optimization and recommendations"
+  type        = bool
+  default     = true
+}
+
+variable "spot_max_price" {
+  description = "Maximum price per hour you're willing to pay for spot instances. If null, uses on-demand price."
+  type        = string
+  default     = null
+}
+
+variable "spot_interruption_behavior" {
+  description = "Indicates how to handle instances when spot price exceeds max price. Valid values: hibernate, stop, terminate"
+  type        = string
+  default     = "terminate"
+
+  validation {
+    condition     = contains(["hibernate", "stop", "terminate"], var.spot_interruption_behavior)
+    error_message = "Spot interruption behavior must be one of: hibernate, stop, terminate."
+  }
 }

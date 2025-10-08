@@ -1,3 +1,21 @@
+# Validation checks
+resource "null_resource" "validate_instance_types" {
+  count = length(local.invalid_instance_types) > 0 ? 1 : 0
+
+  provisioner "local-exec" {
+    command = <<-EOT
+      echo "ERROR: Invalid instance types detected for EKS:"
+      echo "${join(", ", local.invalid_instance_types)}"
+      echo ""
+      echo "Supported instance types:"
+      echo "${join(", ", keys(local.eks_compatible_instance_types))}"
+      echo ""
+      echo "Please update your node_group_instance_types variable to use only supported types."
+      exit 1
+    EOT
+  }
+}
+
 # Security group for EKS cluster
 resource "aws_security_group" "cluster" {
   name        = "${var.cluster_name}-cluster-sg"
@@ -117,7 +135,7 @@ resource "aws_eks_cluster" "this" {
   })
 }
 
-# EKS Node Group
+# EKS Node Group with spot instance optimization
 resource "aws_eks_node_group" "this" {
   cluster_name    = aws_eks_cluster.this.name
   node_group_name = "${var.cluster_name}-node-group"
@@ -147,11 +165,27 @@ resource "aws_eks_node_group" "this" {
   disk_size      = var.node_group_disk_size
   instance_types = var.node_group_instance_types
 
+  # Enhanced tagging for spot instances and cost tracking
+  tags = merge(var.tags, {
+    Name                 = "${var.cluster_name}-node-group"
+    "SpotPriceOptimized" = var.enable_spot_price_optimization ? "true" : "false"
+    "CapacityType"       = var.node_group_capacity_type
+    "InstanceTypes"      = join(",", var.node_group_instance_types)
+  })
+
   # Ensure that IAM Role permissions are created before and deleted after EKS Node Group handling.
   depends_on = [
     aws_iam_role_policy_attachment.node_group_AmazonEKSWorkerNodePolicy,
-    aws_iam_role_policy_attachment.node_group_AmazonEKS_CNI_Policy
+    aws_iam_role_policy_attachment.node_group_AmazonEKS_CNI_Policy,
+    aws_iam_role_policy_attachment.node_group_AmazonEC2ContainerRegistryReadOnly,
+    null_resource.validate_instance_types
   ]
+
+  lifecycle {
+    ignore_changes = [
+      scaling_config[0].desired_size,
+    ]
+  }
 }
 
 

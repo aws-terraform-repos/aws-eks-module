@@ -43,19 +43,3 @@ resource "aws_route53_record" "subdomain_ns" {
   depends_on = [aws_route53_zone.cluster_subdomains]
 }
 
-# Local values for zone management
-locals {
-  # Combine created zones with external zone IDs
-  all_zone_ids = concat(
-    values(aws_route53_zone.cluster_zones)[*].zone_id,
-    values(aws_route53_zone.cluster_subdomains)[*].zone_id,
-    var.external_dns_zone_ids
-  )
-
-  # All domain names for external-dns configuration
-  all_domains = concat(
-    var.hosted_zone_domains,
-    [for subdomain in var.subdomain_zones : "${subdomain}.${var.primary_domain}"],
-    var.external_dns_domain_filters
-  )
-}

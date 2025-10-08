@@ -150,3 +150,51 @@ output "helm_deployments_enabled" {
   description = "Whether Helm deployments are enabled"
   value       = var.enable_helm_deployments
 }
+
+# Spot Pricing and Instance Type Outputs
+output "spot_price_analysis" {
+  description = "Current spot pricing analysis for configured instance types"
+  value       = var.enable_spot_price_optimization ? local.spot_prices_by_instance : {}
+}
+
+output "cost_optimized_recommendations" {
+  description = "Cost-optimized instance type recommendations based on current spot pricing"
+  value = var.enable_spot_price_optimization ? [
+    for rec in local.cost_optimized_recommendations :
+    rec if rec.avg_hourly_cost > 0
+  ] : []
+}
+
+output "eks_compatible_instance_types" {
+  description = "All EKS-compatible instance types with specifications"
+  value       = local.eks_compatible_instance_types
+}
+
+output "current_instance_type_validation" {
+  description = "Validation status of current instance types"
+  value = {
+    valid_types   = [for t in var.node_group_instance_types : t if contains(keys(local.eks_compatible_instance_types), t)]
+    invalid_types = local.invalid_instance_types
+    all_valid     = length(local.invalid_instance_types) == 0
+  }
+}
+
+output "availability_zones_used" {
+  description = "Availability zones being used for spot price analysis"
+  value       = data.aws_availability_zones.available.names
+}
+
+output "recommended_instance_configuration" {
+  description = "Recommended instance configuration based on current pricing"
+  value = var.enable_spot_price_optimization && length(local.cost_optimized_recommendations) > 0 ? {
+    most_cost_effective = element([
+      for rec in local.cost_optimized_recommendations :
+      rec if rec.cost_per_vcpu > 0
+    ], 0)
+    best_value_memory = try(element([
+      for rec in local.cost_optimized_recommendations :
+      rec if rec.cost_per_gb > 0
+    ], 0), null)
+    capacity_type_recommendation = var.node_group_capacity_type
+  } : null
+}

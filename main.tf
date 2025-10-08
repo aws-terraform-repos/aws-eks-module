@@ -65,6 +65,11 @@ module "eks" {
   helm_timeout            = var.helm_timeout
   wait_for_ready          = var.wait_for_ready
 
+  # Spot Pricing Optimization
+  enable_spot_price_optimization = var.enable_spot_price_optimization
+  spot_max_price                 = var.spot_max_price
+  spot_interruption_behavior     = var.spot_interruption_behavior
+
   # Tags
   tags = var.tags
 }
@@ -183,8 +188,59 @@ output "load_balancer_controller_role_arn" {
 
 # Deployment Instructions Output
 output "deployment_instructions" {
-  description = "Complete deployment instructions for DNS-enabled EKS cluster"
-  value       = var.create_hosted_zones ? "EKS cluster with DNS automation deployed successfully! Check hosted_zone_name_servers output for domain configuration, then install Helm charts manually." : "EKS cluster deployed without hosted zones. Configure external DNS manually."
+  description = "Complete deployment instructions for DNS-enabled EKS cluster with cost optimization"
+  value       = <<-EOT
+🎉 EKS cluster with spot pricing optimization deployed successfully!
+
+📊 COST OPTIMIZATION SUMMARY:
+- Capacity Type: ${var.node_group_capacity_type}
+- Instance Types: ${join(", ", var.node_group_instance_types)}
+- Spot Price Analysis: Check 'spot_price_analysis' output for current pricing
+- Cost Recommendations: Check 'cost_optimized_recommendations' output
+
+🔧 NEXT STEPS:
+1. Configure kubectl: ${module.eks.cluster_name != "" ? "aws eks update-kubeconfig --region ${data.aws_region.current.name} --name ${module.eks.cluster_name}" : ""}
+2. Review spot pricing: terraform output spot_price_analysis
+3. Check cost recommendations: terraform output cost_optimized_recommendations
+${var.create_hosted_zones ? "4. Configure domain nameservers (check hosted_zone_name_servers output)" : ""}
+${var.enable_helm_deployments ? "5. Helm charts will be deployed automatically" : "5. Install Helm charts manually (check helm_installation_commands output)"}
+
+💡 COST OPTIMIZATION TIPS:
+- Current setup uses ${var.node_group_capacity_type} instances
+- Consider mixed instance types for better availability
+- Monitor spot interruption rates in CloudWatch
+- Use cluster autoscaler for optimal scaling
+EOT
+}
+
+# Spot Pricing and Cost Optimization Outputs
+output "spot_price_analysis" {
+  description = "Current spot pricing analysis for configured instance types"
+  value       = module.eks.spot_price_analysis
+  sensitive   = false
+}
+
+output "cost_optimized_recommendations" {
+  description = "Cost-optimized instance type recommendations based on current spot pricing"
+  value       = module.eks.cost_optimized_recommendations
+  sensitive   = false
+}
+
+output "current_instance_type_validation" {
+  description = "Validation status of current instance types"
+  value       = module.eks.current_instance_type_validation
+}
+
+output "recommended_instance_configuration" {
+  description = "Recommended instance configuration based on current pricing"
+  value       = module.eks.recommended_instance_configuration
+  sensitive   = false
+}
+
+output "eks_compatible_instance_types" {
+  description = "All EKS-compatible instance types with specifications"
+  value       = module.eks.eks_compatible_instance_types
+  sensitive   = false
 }
 
 # Helm Installation Commands Output
