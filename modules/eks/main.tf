@@ -170,7 +170,7 @@ resource "aws_eks_node_group" "this" {
     Name                 = "${var.cluster_name}-node-group"
     "SpotPriceOptimized" = var.enable_spot_price_optimization ? "true" : "false"
     "CapacityType"       = var.node_group_capacity_type
-    "InstanceTypes"      = join(",", var.node_group_instance_types)
+    "InstanceTypes"      = join("-", var.node_group_instance_types)
   })
 
   # Ensure that IAM Role permissions are created before and deleted after EKS Node Group handling.
