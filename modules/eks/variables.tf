@@ -42,7 +42,7 @@ variable "subnet_ids" {
 variable "node_group_instance_types" {
   description = "Instance types for the EKS node group. Must be EKS-compatible types. Spot pricing will be automatically queried for cost optimization."
   type        = list(string)
-  default     = ["t3.medium", "t3a.medium", "m5.large"]
+  default     = ["t4g.medium", "t3a.medium", "m6g.large"]
 
   validation {
     condition     = length(var.node_group_instance_types) > 0
