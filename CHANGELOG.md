@@ -42,7 +42,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **AWS Provider**: >= 5.0
 - **Kubernetes Provider**: >= 2.20
 - **Helm Provider**: >= 2.10
-- **EKS Version**: Supports 1.28+ (default: 1.32)
+- **EKS Version**: Supports 1.28+ (default: 1.33)
 - **Node Groups**: Configurable instance types, sizes, and AMI types
 
 ### Module Structure

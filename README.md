@@ -105,7 +105,7 @@ module "eks" {
 
   # Basic cluster configuration
   cluster_name    = "eks-dns-cluster"
-  cluster_version = "1.32"
+  cluster_version = "1.33"
   vpc_id          = "vpc-your-vpc-id"
 
   # Route53 DNS automation
@@ -173,7 +173,7 @@ module "eks" {
   source = "./modules/eks"
 
   cluster_name    = "my-eks-cluster"
-  cluster_version = "1.32"
+  cluster_version = "1.33"
   
   # Discover VPC by name tag
   vpc_name = "my-vpc"
@@ -190,7 +190,7 @@ module "eks" {
   public_access_cidrs    = ["10.0.0.0/16"]
   
   node_group_capacity_type = "ON_DEMAND"
-  node_group_ami_type     = "AL2023_x86_64_STANDARD"  # Required for K8s 1.32+
+  node_group_ami_type     = "AL2023_x86_64_STANDARD"  # Required for K8s 1.33+
   node_group_disk_size    = 20
   
   enable_irsa = true
@@ -208,7 +208,7 @@ module "eks" {
   source = "path/to/this/module"
 
   cluster_name    = "my-eks-cluster"
-  cluster_version = "1.28"
+  cluster_version = "1.33"
   
   # Discover VPC by tags
   vpc_tags = {

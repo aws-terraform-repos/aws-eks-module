@@ -9,7 +9,7 @@ variable "cluster_name" {
 variable "cluster_version" {
   description = "Kubernetes version to use for the EKS cluster"
   type        = string
-  default     = "1.32"
+  default     = "1.33"
 }
 
 variable "vpc_name" {
@@ -78,7 +78,7 @@ variable "node_group_capacity_type" {
 }
 
 variable "node_group_ami_type" {
-  description = "Type of Amazon Machine Image (AMI) associated with the EKS Node Group. AL2023_x86_64_STANDARD is required for Kubernetes 1.32+"
+  description = "Type of Amazon Machine Image (AMI) associated with the EKS Node Group. AL2023_x86_64_STANDARD is required for Kubernetes 1.33+"
   type        = string
   default     = "AL2023_x86_64_STANDARD"
 }
