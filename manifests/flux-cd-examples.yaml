@@ -1,0 +1,211 @@
+# Example Flux CD Configuration Manifests
+# Apply these after Flux CD is installed and configured
+
+---
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: GitRepository
+metadata:
+  name: webapp-source
+  namespace: flux-system
+spec:
+  interval: 1m
+  ref:
+    branch: main
+  url: https://github.com/your-org/webapp-manifests
+  # secretRef:  # Uncomment for private repositories
+  #   name: flux-git-auth
+
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: webapp-kustomization
+  namespace: flux-system
+spec:
+  interval: 1m
+  path: "./apps/webapp"
+  prune: true
+  sourceRef:
+    kind: GitRepository
+    name: webapp-source
+  targetNamespace: webapp
+  timeout: 5m
+  healthChecks:
+    - apiVersion: apps/v1
+      kind: Deployment
+      name: webapp
+      namespace: webapp
+
+---
+# Example Image Repository for automation
+apiVersion: image.toolkit.fluxcd.io/v1beta2
+kind: ImageRepository
+metadata:
+  name: webapp-image
+  namespace: flux-system
+spec:
+  image: your-account.dkr.ecr.us-west-2.amazonaws.com/webapp
+  interval: 1m
+  # secretRef:  # Uncomment for private ECR
+  #   name: ecr-credentials
+
+---
+# Example Image Policy for automation
+apiVersion: image.toolkit.fluxcd.io/v1beta2
+kind: ImagePolicy
+metadata:
+  name: webapp-policy
+  namespace: flux-system
+spec:
+  imageRepositoryRef:
+    name: webapp-image
+  policy:
+    semver:
+      range: ">=1.0.0"
+  filterTags:
+    pattern: '^v?[0-9]+\.[0-9]+\.[0-9]+$'
+    extract: "$0"
+
+---
+# Example Image Update Automation
+apiVersion: image.toolkit.fluxcd.io/v1beta1
+kind: ImageUpdateAutomation
+metadata:
+  name: webapp-automation
+  namespace: flux-system
+spec:
+  interval: 1m
+  sourceRef:
+    kind: GitRepository
+    name: webapp-source
+  git:
+    checkout:
+      ref:
+        branch: main
+    commit:
+      author:
+        email: flux@your-domain.com
+        name: Flux Bot
+      messageTemplate: |
+        Automated image update
+
+        Automation name: {{ .AutomationObject }}
+
+        Files:
+        {{ range $filename, $_ := .Updated.Files -}}
+        - {{ $filename }}
+        {{ end -}}
+
+        Objects:
+        {{ range $resource, $_ := .Updated.Objects -}}
+        - {{ $resource.Kind }} {{ $resource.Name }}
+        {{ end -}}
+
+        Images:
+        {{ range $resource, $_ := .Updated.Images -}}
+        - {{ $resource }}
+        {{ end -}}
+    push:
+      branch: main
+  update:
+    path: "./apps/webapp"
+    strategy: Setters
+
+---
+# Example HelmRepository
+apiVersion: source.toolkit.fluxcd.io/v1beta2
+kind: HelmRepository
+metadata:
+  name: nginx-stable
+  namespace: flux-system
+spec:
+  interval: 1m
+  url: https://helm.nginx.com/stable
+
+---
+# Example HelmRelease
+apiVersion: helm.toolkit.fluxcd.io/v2beta1
+kind: HelmRelease
+metadata:
+  name: nginx-ingress
+  namespace: flux-system
+spec:
+  interval: 1m
+  chart:
+    spec:
+      chart: nginx-ingress
+      sourceRef:
+        kind: HelmRepository
+        name: nginx-stable
+      version: ">=0.14.0"
+  targetNamespace: nginx-system
+  createNamespace: true
+  values:
+    controller:
+      service:
+        type: LoadBalancer
+        annotations:
+          service.beta.kubernetes.io/aws-load-balancer-type: "nlb"
+          service.beta.kubernetes.io/aws-load-balancer-cross-zone-load-balancing-enabled: "true"
+
+---
+# Example Notification Provider (Slack)
+apiVersion: notification.toolkit.fluxcd.io/v1beta1
+kind: Provider
+metadata:
+  name: slack
+  namespace: flux-system
+spec:
+  type: slack
+  channel: "#flux-notifications"
+  secretRef:
+    name: slack-webhook-url
+
+---
+# Example Alert
+apiVersion: notification.toolkit.fluxcd.io/v1beta1
+kind: Alert
+metadata:
+  name: webapp-alert
+  namespace: flux-system
+spec:
+  providerRef:
+    name: slack
+  eventSeverity: info
+  eventSources:
+    - kind: GitRepository
+      name: webapp-source
+    - kind: Kustomization
+      name: webapp-kustomization
+  summary: "Webapp deployment status"
+
+---
+# Example OCIRepository for Helm charts
+apiVersion: source.toolkit.fluxcd.io/v1beta2
+kind: OCIRepository
+metadata:
+  name: webapp-chart
+  namespace: flux-system
+spec:
+  interval: 1m
+  url: oci://your-account.dkr.ecr.us-west-2.amazonaws.com/charts/webapp
+  ref:
+    tag: latest
+  # secretRef:  # For private ECR
+  #   name: ecr-credentials
+
+---
+# Example Bucket source (S3)
+apiVersion: source.toolkit.fluxcd.io/v1beta2
+kind: Bucket
+metadata:
+  name: webapp-configs
+  namespace: flux-system
+spec:
+  interval: 1m
+  bucketName: your-configs-bucket
+  endpoint: s3.us-west-2.amazonaws.com
+  region: us-west-2
+  provider: aws
+  # secretRef:  # For S3 credentials
+  #   name: s3-credentials

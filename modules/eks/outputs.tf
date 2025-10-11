@@ -150,3 +150,18 @@ output "helm_deployments_enabled" {
   description = "Whether Helm deployments are enabled"
   value       = var.enable_helm_deployments
 }
+
+output "flux_cd_role_arn" {
+  description = "ARN of the Flux CD IAM role"
+  value       = var.enable_irsa && var.enable_flux_cd ? aws_iam_role.flux_cd[0].arn : null
+}
+
+output "flux_cd_namespace" {
+  description = "Kubernetes namespace where Flux CD is installed"
+  value       = var.enable_flux_cd ? var.flux_cd_namespace : null
+}
+
+output "helm_flux_cd_status" {
+  description = "Status of the Flux CD Helm release"
+  value       = var.enable_helm_deployments && var.enable_flux_cd ? helm_release.flux_cd[0].status : "not_deployed"
+}

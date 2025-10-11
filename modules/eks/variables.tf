@@ -263,3 +263,64 @@ variable "wait_for_ready" {
   type        = bool
   default     = true
 }
+
+# Flux CD Configuration
+variable "enable_flux_cd" {
+  description = "Whether to enable Flux CD IRSA role and Helm deployment"
+  type        = bool
+  default     = false
+}
+
+variable "flux_cd_chart_version" {
+  description = "Helm chart version for Flux CD"
+  type        = string
+  default     = null
+}
+
+variable "flux_cd_namespace" {
+  description = "Kubernetes namespace for Flux CD"
+  type        = string
+  default     = "flux-system"
+}
+
+variable "flux_cd_git_repository_url" {
+  description = "Git repository URL for Flux CD to monitor"
+  type        = string
+  default     = null
+}
+
+variable "flux_cd_git_repository_branch" {
+  description = "Git repository branch for Flux CD to monitor"
+  type        = string
+  default     = "main"
+}
+
+variable "flux_cd_git_repository_path" {
+  description = "Path within the Git repository for Flux CD to monitor"
+  type        = string
+  default     = "./"
+}
+
+variable "flux_cd_git_repository_interval" {
+  description = "Interval for Flux CD to check the Git repository"
+  type        = string
+  default     = "1m"
+}
+
+variable "flux_cd_git_auth_secret_name" {
+  description = "Name of the Kubernetes secret containing Git authentication details"
+  type        = string
+  default     = null
+}
+
+variable "flux_cd_image_automation" {
+  description = "Whether to enable Flux CD image automation"
+  type        = bool
+  default     = false
+}
+
+variable "flux_cd_notification_providers" {
+  description = "List of notification providers for Flux CD alerts"
+  type        = list(string)
+  default     = []
+}

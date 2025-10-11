@@ -567,3 +567,83 @@ resource "aws_iam_openid_connect_provider" "eks" {
     Name = "${var.cluster_name}-eks-irsa"
   })
 }
+
+# Flux CD IRSA Role
+resource "aws_iam_policy" "flux_cd" {
+  count       = var.enable_irsa && var.enable_flux_cd ? 1 : 0
+  name        = "${var.cluster_name}-FluxCDPolicy"
+  description = "Policy for Flux CD to manage AWS resources"
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "ecr:GetAuthorizationToken",
+          "ecr:BatchCheckLayerAvailability",
+          "ecr:GetDownloadUrlForLayer",
+          "ecr:BatchGetImage",
+          "ecr:DescribeRepositories",
+          "ecr:DescribeImages"
+        ]
+        Resource = "*"
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "secretsmanager:GetSecretValue",
+          "secretsmanager:DescribeSecret"
+        ]
+        Resource = "arn:${data.aws_partition.current.partition}:secretsmanager:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:secret:flux-*"
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "ssm:GetParameter",
+          "ssm:GetParameters",
+          "ssm:GetParametersByPath"
+        ]
+        Resource = "arn:${data.aws_partition.current.partition}:ssm:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:parameter/flux/*"
+      }
+    ]
+  })
+
+  tags = merge(var.tags, {
+    Name = "${var.cluster_name}-flux-cd-policy"
+  })
+}
+
+resource "aws_iam_role" "flux_cd" {
+  count = var.enable_irsa && var.enable_flux_cd ? 1 : 0
+  name  = "${var.cluster_name}-flux-cd-role"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Action = "sts:AssumeRoleWithWebIdentity"
+        Effect = "Allow"
+        Principal = {
+          Federated = aws_iam_openid_connect_provider.eks[0].arn
+        }
+        Condition = {
+          StringEquals = {
+            "${replace(aws_iam_openid_connect_provider.eks[0].url, "https://", "")}:sub" = "system:serviceaccount:flux-system:flux-cd"
+            "${replace(aws_iam_openid_connect_provider.eks[0].url, "https://", "")}:aud" = "sts.amazonaws.com"
+          }
+        }
+      }
+    ]
+  })
+
+  tags = merge(var.tags, {
+    Name = "${var.cluster_name}-flux-cd-role"
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "flux_cd_policy" {
+  count      = var.enable_irsa && var.enable_flux_cd ? 1 : 0
+  policy_arn = aws_iam_policy.flux_cd[0].arn
+  role       = aws_iam_role.flux_cd[0].name
+}
