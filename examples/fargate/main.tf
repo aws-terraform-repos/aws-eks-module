@@ -1,4 +1,4 @@
-# Flux CD Enabled EKS Cluster Example
+# Fargate EKS Cluster Example
 
 module "eks" {
   source = "../../modules/eks"
@@ -14,7 +14,8 @@ module "eks" {
   subnet_tags = var.subnet_tags
   subnet_ids  = var.subnet_ids
 
-  # Node Group Configuration
+  # Node Group Configuration - Small node group for system components
+  # Some components like EBS CSI driver require nodes
   node_group_instance_types = var.node_group_instance_types
   node_group_desired_size   = var.node_group_desired_size
   node_group_max_size       = var.node_group_max_size
@@ -37,23 +38,17 @@ module "eks" {
   create_subdomain_zones = var.create_subdomain_zones
   subdomain_zones        = var.subdomain_zones
 
-  # External DNS and Load Balancer Configuration - ENABLED for GitOps
-  enable_load_balancer_controller = true
-  enable_external_dns             = true
-  external_dns_source             = ["ingress", "service"]
-  external_dns_provider           = "aws"
-  external_dns_log_level          = "info"
+  # Load Balancer and DNS Configuration
+  enable_load_balancer_controller = var.enable_load_balancer_controller
+  enable_external_dns             = var.enable_external_dns
+  external_dns_source             = var.external_dns_source
+  external_dns_provider           = var.external_dns_provider
+  external_dns_log_level          = var.external_dns_log_level
 
-  # Helm Deployments Configuration - ENABLED for GitOps
-  enable_helm_deployments = true
-
-  # Flux CD Configuration - Complete GitOps setup
-  enable_flux_cd                = var.enable_flux_cd
-  flux_cd_git_repository_url    = var.flux_cd_git_repository_url
-  flux_cd_git_repository_branch = var.flux_cd_git_repository_branch
-  flux_cd_git_repository_path   = var.flux_cd_git_repository_path
-  flux_cd_git_auth_secret_name  = var.flux_cd_git_auth_secret_name
-  flux_cd_image_automation      = var.flux_cd_image_automation
+  # Helm Deployment Configuration
+  enable_helm_deployments = var.enable_helm_deployments
+  helm_timeout            = var.helm_timeout
+  wait_for_ready          = var.wait_for_ready
 
   tags = var.tags
 }

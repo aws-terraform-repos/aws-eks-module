@@ -1,14 +1,17 @@
 # EKS Cluster with Flux CD GitOps
 
-This example demonstrates how to deploy an EKS cluster with Flux CD enabled for GitOps continuous deployment.
+This example demonstrates how to deploy a **production-ready EKS cluster** with Flux CD enabled for complete GitOps continuous deployment, including all necessary DNS and load balancing components.
 
 ## 🎯 What This Example Provides
 
-- **EKS Cluster**: Production-ready Kubernetes cluster on AWS
-- **Flux CD**: GitOps continuous delivery tool for automated deployments
+- **EKS Cluster**: Production-ready Kubernetes cluster on AWS with all add-ons
+- **Flux CD**: Complete GitOps continuous delivery tool for automated deployments
+- **AWS Load Balancer Controller**: Automatic ALB/NLB creation with IRSA integration
+- **ExternalDNS**: Automatic DNS record management for ingresses and services
 - **IRSA Integration**: IAM Roles for Service Accounts for secure AWS access
-- **Image Automation**: Automatic image updates from container registries
+- **Image Automation**: Automatic container image updates from registries
 - **Git Repository Sync**: Continuous monitoring of Git repositories for changes
+- **Complete DNS Stack**: Route53 integration with external-dns automation
 
 ## 🏗️ Architecture Overview
 
@@ -20,6 +23,11 @@ graph TB
     E -->|Update Git| A
     F[Developer] -->|Git Push| A
     G[AWS IAM] -->|IRSA| B
+    H[Route53] -->|DNS Records| I[ExternalDNS]
+    I -->|Updates| C
+    J[ALB/NLB] -->|Managed by| K[Load Balancer Controller]
+    K -->|IRSA| G
+    C -->|Creates| J
 ```
 
 ## 📋 Prerequisites
@@ -35,6 +43,7 @@ Your AWS credentials need permissions for:
 - EKS cluster management
 - EC2 (VPC, subnets, security groups)
 - IAM (roles, policies, OIDC provider)
+- Route53 (if using DNS automation)
 - ECR (if using AWS container registry)
 
 ### Git Repository Setup
@@ -49,7 +58,6 @@ Your AWS credentials need permissions for:
 ```bash
 git clone <this-repository>
 cd examples/flux-cd
-cp terraform.tfvars.example terraform.tfvars
 ```
 
 ### 2. Update Configuration
@@ -65,12 +73,19 @@ cluster_version = "1.32"
 vpc_name = "my-vpc"  # or use vpc_id for explicit VPC
 public_access_cidrs = ["YOUR.IP.ADDRESS/32"]  # Replace with your IP!
 
+# DNS Configuration (optional but recommended)
+create_hosted_zones = true
+hosted_zone_domains = ["example.com"]
+
 # Flux CD configuration
 enable_flux_cd = true
 flux_cd_git_repository_url = "https://github.com/your-org/k8s-manifests"
 flux_cd_git_repository_branch = "main"
 flux_cd_git_repository_path = "./clusters/my-flux-cd-cluster"
 flux_cd_image_automation = true
+
+# IMPORTANT: Enable Helm deployments for full functionality
+enable_helm_deployments = true
 
 # For private repositories:
 # flux_cd_git_auth_secret_name = "flux-git-auth"
@@ -100,8 +115,17 @@ aws eks update-kubeconfig --region us-west-2 --name my-flux-cd-cluster
 # Check cluster nodes
 kubectl get nodes
 
+# Check all components are running
+kubectl get pods -n kube-system
+
 # Check Flux CD installation
 kubectl get pods -n flux-system
+
+# Verify Load Balancer Controller
+kubectl get deployment -n kube-system aws-load-balancer-controller
+
+# Verify ExternalDNS
+kubectl get deployment -n kube-system external-dns
 
 # Check Flux CD resources
 flux get sources git
@@ -154,124 +178,37 @@ k8s-manifests/
 
 ## 🔐 Private Repository Authentication
 
-If using a private Git repository, create authentication secrets:
+For private Git repositories, create authentication secrets:
 
 ### SSH Key Authentication
 
 ```bash
-# Create SSH key pair
-ssh-keygen -t rsa -b 4096 -f ~/.ssh/flux_rsa
+# Generate SSH key for Flux CD
+ssh-keygen -t ed25519 -C "flux-cd@your-domain.com" -f ~/.ssh/flux_rsa -N ""
 
-# Add public key to your Git provider
+# Add public key to your Git repository's deploy keys
 cat ~/.ssh/flux_rsa.pub
 
 # Create Kubernetes secret
 kubectl create secret generic flux-git-auth \
   --from-file=identity=~/.ssh/flux_rsa \
-  --from-literal=known_hosts="$(ssh-keyscan github.com)" \
+  --from-file=known_hosts=<(ssh-keyscan github.com) \
   -n flux-system
+
+# Update terraform.tfvars
+flux_cd_git_auth_secret_name = "flux-git-auth"
+flux_cd_git_repository_url = "git@github.com:your-org/k8s-manifests.git"
 ```
 
 ### Token Authentication
 
 ```bash
-# Create secret with token
+# Create personal access token in your Git provider
+# Create Kubernetes secret
 kubectl create secret generic flux-git-auth \
-  --from-literal=username=your-username \
-  --from-literal=password=your-token \
+  --from-literal=username=git \
+  --from-literal=password=YOUR_TOKEN \
   -n flux-system
-```
-
-## 🖼️ Image Automation Setup
-
-Enable automatic image updates by adding these resources to your Git repository:
-
-### ImageRepository
-
-```yaml
-apiVersion: image.toolkit.fluxcd.io/v1beta2
-kind: ImageRepository
-metadata:
-  name: webapp
-  namespace: flux-system
-spec:
-  image: your-account.dkr.ecr.us-west-2.amazonaws.com/webapp
-  interval: 1m
-  secretRef:
-    name: ecr-credentials  # If using private ECR
-```
-
-### ImagePolicy
-
-```yaml
-apiVersion: image.toolkit.fluxcd.io/v1beta2
-kind: ImagePolicy
-metadata:
-  name: webapp-policy
-  namespace: flux-system
-spec:
-  imageRepositoryRef:
-    name: webapp
-  policy:
-    semver:
-      range: '>=1.0.0'
-```
-
-### ImageUpdateAutomation
-
-```yaml
-apiVersion: image.toolkit.fluxcd.io/v1beta1
-kind: ImageUpdateAutomation
-metadata:
-  name: webapp-automation
-  namespace: flux-system
-spec:
-  interval: 1m
-  sourceRef:
-    kind: GitRepository
-    name: flux-system
-  git:
-    checkout:
-      ref:
-        branch: main
-    commit:
-      author:
-        email: flux@example.com
-        name: Flux
-      messageTemplate: |
-        Automated image update
-        
-        Automation name: {{ .AutomationObject }}
-        
-        Files:
-        {{ range $filename, $_ := .Updated.Files -}}
-        - {{ $filename }}
-        {{ end -}}
-        
-        Objects:
-        {{ range $resource, $_ := .Updated.Objects -}}
-        - {{ $resource.Kind }} {{ $resource.Name }}
-        {{ end -}}
-    push:
-      branch: main
-  update:
-    path: "./clusters/my-flux-cd-cluster"
-    strategy: Setters
-```
-
-### Application Deployment with Image Automation
-
-```yaml
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: webapp
-spec:
-  template:
-    spec:
-      containers:
-      - name: webapp
-        image: your-account.dkr.ecr.us-west-2.amazonaws.com/webapp:1.0.0 # {"$imagepolicy": "flux-system:webapp-policy"}
 ```
 
 ## 🛠️ Management Commands
@@ -311,6 +248,12 @@ flux get images update
 # Check Flux CD pods
 kubectl get pods -n flux-system
 
+# Check AWS Load Balancer Controller
+kubectl get pods -n kube-system -l app.kubernetes.io/name=aws-load-balancer-controller
+
+# Check ExternalDNS
+kubectl get pods -n kube-system -l app.kubernetes.io/name=external-dns
+
 # Check custom resources
 kubectl get gitrepositories -n flux-system
 kubectl get kustomizations -n flux-system
@@ -323,9 +266,11 @@ kubectl logs -n flux-system -l app=kustomize-controller
 kubectl logs -n flux-system -l app=image-reflector-controller
 kubectl logs -n flux-system -l app=image-automation-controller
 
-# Describe resources for troubleshooting
-kubectl describe gitrepository flux-system -n flux-system
-kubectl describe kustomization flux-system -n flux-system
+# Check Load Balancer Controller logs
+kubectl logs -n kube-system -l app.kubernetes.io/name=aws-load-balancer-controller
+
+# Check ExternalDNS logs
+kubectl logs -n kube-system -l app.kubernetes.io/name=external-dns
 ```
 
 ## 🔍 Troubleshooting
@@ -341,71 +286,23 @@ kubectl describe kustomization flux-system -n flux-system
    ssh -T git@github.com -i ~/.ssh/flux_rsa
    ```
 
-2. **Image Pull Failures**
+2. **Load Balancer Controller Issues**
    ```bash
-   # Check ECR authentication
-   aws ecr get-login-password --region us-west-2 | docker login --username AWS --password-stdin <account>.dkr.ecr.us-west-2.amazonaws.com
+   # Check IRSA configuration
+   kubectl describe sa aws-load-balancer-controller -n kube-system
    
-   # Create ECR secret if needed
-   kubectl create secret docker-registry ecr-credentials \
-     --docker-server=<account>.dkr.ecr.us-west-2.amazonaws.com \
-     --docker-username=AWS \
-     --docker-password=$(aws ecr get-login-password --region us-west-2) \
-     -n flux-system
+   # Check controller logs
+   kubectl logs -n kube-system -l app.kubernetes.io/name=aws-load-balancer-controller
    ```
 
-3. **Reconciliation Issues**
+3. **ExternalDNS Issues**
    ```bash
-   # Check Flux CD status
-   flux check
+   # Check IRSA configuration
+   kubectl describe sa external-dns -n kube-system
    
-   # Force reconciliation
-   flux reconcile source git flux-system --verbose
+   # Check DNS logs
+   kubectl logs -n kube-system -l app.kubernetes.io/name=external-dns
    ```
-
-### Useful Debugging
-
-```bash
-# Get all Flux CD events
-kubectl get events -n flux-system --sort-by='.lastTimestamp'
-
-# Check resource status
-kubectl get gitrepository flux-system -n flux-system -o yaml
-kubectl get kustomization flux-system -n flux-system -o yaml
-
-# View controller logs
-kubectl logs -f deployment/source-controller -n flux-system
-kubectl logs -f deployment/kustomize-controller -n flux-system
-```
-
-## 📊 Monitoring and Observability
-
-Flux CD provides Prometheus metrics out of the box:
-
-```yaml
-# ServiceMonitor for Prometheus
-apiVersion: monitoring.coreos.com/v1
-kind: ServiceMonitor
-metadata:
-  name: flux-system
-  namespace: monitoring
-spec:
-  selector:
-    matchLabels:
-      app.kubernetes.io/part-of: flux
-  endpoints:
-  - port: http-prom
-    interval: 30s
-```
-
-## 🔒 Security Best Practices
-
-1. **Use IRSA**: Leverage IAM Roles for Service Accounts for AWS access
-2. **Least Privilege**: Grant minimal permissions to Flux CD
-3. **Private Repositories**: Use private Git repositories for sensitive configurations
-4. **Secret Management**: Use AWS Secrets Manager or Kubernetes secrets
-5. **Network Policies**: Implement network policies to restrict traffic
-6. **Image Scanning**: Enable container image vulnerability scanning
 
 ## 🧹 Cleanup
 
@@ -421,17 +318,6 @@ terraform destroy
 
 - [Flux CD Documentation](https://fluxcd.io/docs/)
 - [AWS EKS Best Practices](https://aws.github.io/aws-eks-best-practices/)
+- [AWS Load Balancer Controller](https://kubernetes-sigs.github.io/aws-load-balancer-controller/)
+- [ExternalDNS Documentation](https://github.com/kubernetes-sigs/external-dns)
 - [GitOps Principles](https://www.gitops.tech/)
-- [Kubernetes Documentation](https://kubernetes.io/docs/)
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Test thoroughly
-5. Submit a pull request
-
-## 📄 License
-
-This example is provided under the MIT License. See LICENSE file for details.
