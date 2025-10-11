@@ -16,17 +16,21 @@
 - **Validate compatibility**: Research compatibility between different component versions before implementing
 
 ## Key Features
-- **VPC Discovery**: Module can automatically discover VPC by name tag or custom tags, or accept explicit VPC ID
+- **Route53 Integration**: Automatic hosted zone creation and management for DNS automation
+- **ExternalDNS Support**: Automatic DNS record management for Kubernetes services and ingresses
+- **AWS Load Balancer Controller**: Integration with proper IRSA configuration for ALB/NLB management
+- **VPC Discovery**: Module can automatically discover VPC by name tag, custom tags, or accept explicit VPC ID
 - **Subnet Discovery**: Module can automatically discover subnets by tags (default: kubernetes.io/role/internal-elb), or accept explicit subnet IDs
 - **IRSA Support**: Module includes IAM Roles for Service Accounts (IRSA) for secure pod-to-AWS communication
 - **Security Groups**: Dedicated security groups with configurable CIDR restrictions and optional SSH access
 - **EBS CSI Driver**: Properly configured with required IAM permissions and IRSA support
 - **VPC CNI Enhancement**: Dedicated IRSA role for enhanced network security
-- **Add-on Version Management**: Automatic version management for all EKS add-ons
-- **Flexible Configuration**: Three approaches for VPC/subnet selection to fit different use cases
+- **Add-on Version Management**: Automatic version management for all EKS add-ons with conflict resolution
+- **Helm Deployment Support**: Optional automated deployment of critical cluster components
+- **Multi-Environment Support**: Comprehensive tagging and configuration for different environments
 
 ## Overview
-This repository defines a reusable Terraform module for provisioning AWS EKS (Elastic Kubernetes Service) clusters. The codebase is organized with a centralized module structure for clarity and modularity, supporting customization via variables and outputs.
+This repository defines a reusable Terraform module for provisioning AWS EKS (Elastic Kubernetes Service) clusters with integrated Route53 DNS automation. The codebase is organized with a centralized module structure for clarity and modularity, supporting customization via variables and outputs. All deployments are organized in the examples directory for different use cases.
 
 ## Repository Structure
 ```
@@ -37,11 +41,21 @@ aws-eks-module/
 │   ├── outputs.tf       # Module outputs for consumers
 │   ├── iam.tf          # IAM roles, policies, and IRSA configuration
 │   ├── data.tf         # Data sources for VPC/subnet discovery and add-on versions
+│   ├── route53.tf      # Route53 hosted zones and DNS management
+│   ├── helm.tf         # Helm deployment configurations
 │   └── versions.tf     # Provider version constraints
-├── main.tf             # 🚀 Root-level usage example
+├── examples/            # 📖 Complete deployment examples
+│   ├── fargate/        # Fargate-specific configurations
+│   ├── flux-cd/        # GitOps with Flux CD integration
+│   ├── on-demand/      # On-demand instance configurations
+│   └── spot/           # Spot instance configurations
+├── manifests/          # 🎨 Sample Kubernetes manifests with DNS
 ├── README.md           # Main documentation
 ├── TASKFILE.md         # Development workflow guide
-└── Taskfile.yml        # Task automation
+├── Taskfile.yml        # Task automation
+├── CHANGELOG.md        # Version history and changes
+├── MODULE-USAGE.md     # Guide for using module in other projects
+└── FLUX-CD-IMPLEMENTATION.md  # GitOps implementation guide
 ```
 
 ## Key Files & Structure
@@ -50,11 +64,14 @@ aws-eks-module/
 - **`modules/eks/outputs.tf`**: Exposes key outputs (e.g., cluster name, endpoint, IRSA role ARNs).
 - **`modules/eks/iam.tf`**: IAM roles and policies required for EKS, worker nodes, and service accounts.
 - **`modules/eks/data.tf`**: Data sources for dynamic lookups (e.g., AMIs, VPCs, add-on versions).
+- **`modules/eks/route53.tf`**: Route53 hosted zone creation and management for DNS automation.
+- **`modules/eks/helm.tf`**: Helm deployment configurations for ExternalDNS and Load Balancer Controller.
 - **`modules/eks/versions.tf`**: Provider requirements and version constraints.
-- **`main.tf`**: Root-level example showing how to use the centralized module.
+- **`examples/`**: Complete deployment examples for different scenarios (Fargate, Spot, GitOps).
+- **`manifests/`**: Sample Kubernetes manifests demonstrating DNS integration.
 
 ## Patterns & Conventions
-- **Module Usage**: The centralized module is in `modules/eks/`; the root-level `main.tf` provides a complete usage example.
+- **Module Usage**: The centralized module is in `modules/eks/`; examples in the `examples/` directory provide complete deployment configurations.
 - **VPC Discovery**: Supports three methods - by name tag, by custom tags, or explicit IDs for flexibility
 - **Subnet Discovery**: Uses tags to find appropriate subnets (default: private subnets with kubernetes.io/role/internal-elb)
 - **Variable Naming**: Follows Terraform snake_case. Required variables are documented in `modules/eks/variables.tf`.
@@ -64,11 +81,13 @@ aws-eks-module/
 - **IRSA Support**: Module includes IAM Roles for Service Accounts (IRSA) for secure pod-to-AWS communication.
 - **Security Groups**: Dedicated security groups with configurable CIDR restrictions and optional SSH access.
 - **Add-on Management**: Automatic version management with proper conflict resolution.
+- **Route53 Integration**: Automatic hosted zone creation and DNS record management.
+- **Helm Deployments**: Optional automated deployment of ExternalDNS and AWS Load Balancer Controller.
 
 ## Developer Workflows
 - **File-First Approach**: Always make changes directly to files using editing tools rather than showing code
 - **Research-Driven Development**: Use web search to verify current best practices, versions, and compatibility before implementing
-- **Task Runner**: Use `task test-all` for complete validation (requires [Task](https://taskfile.dev/))
+- **Task Runner**: Use `task test-all` for complete validation (requires Task)
 - **Direct Editing**: Use file editing tools to modify configurations, variables, and resources
 - **Batch Operations**: When multiple files need changes, use multi-file editing tools for efficiency
 - **Validation**: After file changes, run `terraform validate` and `terraform plan` to verify correctness
@@ -83,29 +102,35 @@ aws-eks-module/
 This repository includes a comprehensive Taskfile for streamlined development:
 - `task test-all`: Complete test suite (format, validate, plan)
 - `task validate`: Validate the main module
-- `task plan`: Plan the root example for syntax checking
+- `task plan`: Plan example configurations for syntax checking
 - `task clean`: Clean all Terraform state and cache files
+- `task format`: Format all Terraform files
+- `task init-all`: Initialize all modules and examples
 - See [TASKFILE.md](../TASKFILE.md) for complete usage guide
 
 ## Integration Points
 - **AWS**: Requires AWS credentials (via environment or profile).
 - **Kubernetes**: Outputs kubeconfig for cluster access.
 - **IAM**: Integrates with AWS IAM for RBAC and node permissions.
+- **Route53**: Manages DNS zones and records automatically.
+- **Helm**: Optional automated deployment of cluster components.
 
 ## Project-Specific Notes
 - **File-First Development**: Always create or edit actual files rather than providing code examples in chat
 - **Direct Implementation**: When users request code changes, implement them directly in the appropriate files
-- **Real Examples**: Use the root-level `main.tf` as the primary working example rather than showing inline code
+- **Real Examples**: Use the `examples/` directory for working examples rather than showing inline code
 - **Research Before Implementation**: Use web search to verify latest AWS EKS features, provider versions, and best practices
 - **Security-First**: Always search for latest security recommendations and vulnerability updates before making changes
 - Keep all resource names and tags parameterized for multi-environment support.
 - Do not hardcode ARNs, VPC IDs, or AMI IDs; use variables or data sources.
-- The root-level `main.tf` is a complete and working configuration.
+- All complete working configurations are located in the `examples/` directory.
 - IRSA is enabled by default but can be disabled via `enable_irsa = false`.
 - EBS CSI driver and VPC CNI both use dedicated IRSA roles for enhanced security.
 - Security groups use configurable CIDR blocks for API server access control.
 - SSH access to worker nodes is disabled by default for security.
 - Add-ons automatically use compatible versions unless explicitly overridden.
+- Route53 hosted zones are optional but provide automatic DNS management when enabled.
+- Helm deployments are optional and can be enabled for automated component installation.
 
 ## Module Usage Examples
 When referencing the centralized module in configurations:
@@ -117,9 +142,20 @@ module "eks" {
   cluster_name = "my-cluster"
   vpc_name     = "my-vpc"
   
+  # DNS Configuration
+  create_hosted_zones = true
+  hosted_zone_domains = ["example.com"]
+  
   # Additional configuration as needed
 }
 ```
+
+## DNS Automation Features
+- **Hosted Zone Creation**: Automatic Route53 hosted zone management
+- **ExternalDNS Integration**: Automatic DNS record creation for ingresses and services
+- **Load Balancer Controller**: AWS ALB/NLB integration with DNS
+- **Subdomain Support**: Optional subdomain zone creation
+- **Multi-Domain Support**: Support for multiple domains and zones
 
 ## Example: Adding a New Output
 To expose a new EKS attribute:
@@ -133,5 +169,18 @@ To expose a new EKS attribute:
 2. Reference it in your consumer configuration as `module.eks.cluster_version`.
 3. Always use file editing tools rather than providing code snippets in responses.
 
+## Version Management
+- **Current Version**: 1.0.0 (stable release)
+- **Kubernetes Support**: 1.28+ (default: 1.32)
+- **Provider Versions**: AWS ~> 5.0, Helm >= 2.0, Kubernetes >= 2.0
+- **Add-on Versions**: Automatically managed with latest compatible versions
+- **Upgrade Path**: See [CHANGELOG.md](../CHANGELOG.md) for version history
+
+## Examples and Use Cases
+- **Fargate**: `examples/fargate/` for serverless container workloads
+- **GitOps**: `examples/flux-cd/` for GitOps workflow integration
+- **Cost Optimization**: `examples/spot/` for spot instance configurations
+- **Production**: `examples/on-demand/` for production-ready deployments
+
 ---
-For questions, review `README.md` and the working example in the root `main.tf`.
+For questions, review `README.md` and the comprehensive examples in the `examples/` directory.
