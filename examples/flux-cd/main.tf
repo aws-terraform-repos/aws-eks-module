@@ -31,7 +31,7 @@ module "eks" {
       }
     }
   }
-  
+
   # Node Group Options
   node_group_ami_type  = "AL2023_x86_64_STANDARD"
   node_group_disk_size = 20
