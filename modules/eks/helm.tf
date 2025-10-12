@@ -1,10 +1,33 @@
 # Helm deployments for AWS Load Balancer Controller and ExternalDNS
 # These resources deploy the controllers automatically when enabled
+#
+# READINESS STRATEGY:
+# 1. EKS Cluster must be ACTIVE before node groups and Fargate profiles are created
+# 2. Node groups and Fargate profiles must be ACTIVE before add-ons are installed
+# 3. All add-ons (vpc-cni, kube-proxy, coredns, ebs-csi-driver) must be ready before Helm deployments
+# 4. Cluster status is verified via data source before proceeding with Helm/kubectl operations
+# 5. Configurable wait time (cluster_readiness_timeout) ensures cluster stability
+# 6. Helm deployments have explicit wait=true and timeout configurations
 
-# Wait for cluster to be ready before deploying Helm charts
+# Wait for cluster and node groups to be fully ready before deploying Helm charts
 resource "time_sleep" "wait_for_cluster" {
-  depends_on      = [aws_eks_cluster.this, aws_eks_node_group.this]
-  create_duration = "30s"
+  depends_on = [
+    aws_eks_cluster.this,
+    aws_eks_node_group.this,
+    aws_eks_fargate_profile.this,
+    aws_eks_addon.vpc_cni,
+    aws_eks_addon.kube_proxy,
+    aws_eks_addon.coredns,
+    aws_eks_addon.ebs_csi_driver
+  ]
+  create_duration = var.cluster_readiness_timeout
+
+  triggers = {
+    cluster_status   = aws_eks_cluster.this.status
+    cluster_endpoint = aws_eks_cluster.this.endpoint
+    # Force recreation if cluster is recreated
+    cluster_arn = aws_eks_cluster.this.arn
+  }
 }
 
 # AWS Load Balancer Controller Helm Release
@@ -13,8 +36,12 @@ resource "helm_release" "aws_load_balancer_controller" {
 
   depends_on = [
     time_sleep.wait_for_cluster,
+    data.aws_eks_cluster.cluster_status,
     aws_iam_role.alb_controller,
-    aws_eks_node_group.this
+    aws_eks_node_group.this,
+    aws_eks_addon.vpc_cni,
+    aws_eks_addon.kube_proxy,
+    aws_eks_addon.coredns
   ]
 
   name       = "aws-load-balancer-controller"
@@ -50,8 +77,12 @@ resource "helm_release" "external_dns" {
 
   depends_on = [
     time_sleep.wait_for_cluster,
+    data.aws_eks_cluster.cluster_status,
     aws_iam_role.external_dns,
-    aws_eks_node_group.this
+    aws_eks_node_group.this,
+    aws_eks_addon.vpc_cni,
+    aws_eks_addon.kube_proxy,
+    aws_eks_addon.coredns
   ]
 
   name       = "external-dns"
@@ -91,7 +122,11 @@ resource "kubernetes_namespace" "flux_system" {
 
   depends_on = [
     time_sleep.wait_for_cluster,
-    aws_eks_node_group.this
+    data.aws_eks_cluster.cluster_status,
+    aws_eks_node_group.this,
+    aws_eks_addon.vpc_cni,
+    aws_eks_addon.kube_proxy,
+    aws_eks_addon.coredns
   ]
 
   metadata {
@@ -112,8 +147,12 @@ resource "helm_release" "flux_cd" {
   depends_on = [
     kubernetes_namespace.flux_system,
     time_sleep.wait_for_cluster,
+    data.aws_eks_cluster.cluster_status,
     aws_iam_role.flux_cd,
-    aws_eks_node_group.this
+    aws_eks_node_group.this,
+    aws_eks_addon.vpc_cni,
+    aws_eks_addon.kube_proxy,
+    aws_eks_addon.coredns
   ]
 
   name             = "flux2"

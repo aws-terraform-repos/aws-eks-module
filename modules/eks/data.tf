@@ -12,6 +12,12 @@ data "tls_certificate" "eks" {
   url = aws_eks_cluster.this.identity[0].oidc[0].issuer
 }
 
+# Verify cluster is ready before proceeding with dependent resources
+data "aws_eks_cluster" "cluster_status" {
+  depends_on = [aws_eks_cluster.this]
+  name       = aws_eks_cluster.this.name
+}
+
 # IAM policy documents
 data "aws_iam_policy_document" "cluster_assume_role_policy" {
   statement {

@@ -14,14 +14,27 @@ module "eks" {
   subnet_tags = var.subnet_tags
   subnet_ids  = var.subnet_ids
 
-  # Node Group Configuration
-  node_group_instance_types = var.node_group_instance_types
-  node_group_desired_size   = var.node_group_desired_size
-  node_group_max_size       = var.node_group_max_size
-  node_group_min_size       = var.node_group_min_size
-  node_group_capacity_type  = "ON_DEMAND"
-  node_group_ami_type       = "AL2023_x86_64_STANDARD"
-  node_group_disk_size      = 20
+  # Node Group Configuration - Using new-style node_groups map
+  node_groups = {
+    primary = {
+      desired_size   = var.node_group_desired_size
+      max_size       = var.node_group_max_size
+      min_size       = var.node_group_min_size
+      instance_types = var.node_group_instance_types
+      capacity_type  = "ON_DEMAND"
+      labels = {
+        Environment = "development"
+        Project     = "flux-cd-example"
+      }
+      tags = {
+        "kubernetes.io/cluster/${var.cluster_name}" = "owned"
+      }
+    }
+  }
+  
+  # Node Group Options
+  node_group_ami_type  = "AL2023_x86_64_STANDARD"
+  node_group_disk_size = 20
 
   # Security Configuration
   endpoint_private_access = true

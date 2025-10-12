@@ -165,9 +165,12 @@ resource "aws_eks_node_group" "this" {
   })
 
   # Ensure that IAM Role permissions are created before and deleted after EKS Node Group handling.
+  # Also ensure cluster is ready before creating node groups.
   depends_on = [
+    aws_eks_cluster.this,
     aws_iam_role_policy_attachment.node_group_AmazonEKSWorkerNodePolicy,
-    aws_iam_role_policy_attachment.node_group_AmazonEKS_CNI_Policy
+    aws_iam_role_policy_attachment.node_group_AmazonEKS_CNI_Policy,
+    aws_iam_role_policy_attachment.node_group_AmazonEC2ContainerRegistryReadOnly
   ]
 }
 
@@ -193,6 +196,7 @@ resource "aws_eks_fargate_profile" "this" {
   })
 
   depends_on = [
+    aws_eks_cluster.this,
     aws_iam_role_policy_attachment.fargate_profile_AmazonEKSFargatePodExecutionRolePolicy
   ]
 }

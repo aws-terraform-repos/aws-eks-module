@@ -289,12 +289,28 @@ variable "helm_timeout" {
   description = "Timeout for Helm deployments in seconds"
   type        = number
   default     = 600
+
+  validation {
+    condition     = var.helm_timeout >= 300 && var.helm_timeout <= 1800
+    error_message = "Helm timeout must be between 300 (5 minutes) and 1800 (30 minutes) seconds."
+  }
 }
 
 variable "wait_for_ready" {
   description = "Whether to wait for Helm deployments to be ready"
   type        = bool
   default     = true
+}
+
+variable "cluster_readiness_timeout" {
+  description = "Time to wait for cluster and node groups to be ready before Helm deployments (e.g., '60s', '5m')"
+  type        = string
+  default     = "60s"
+
+  validation {
+    condition     = can(regex("^[0-9]+(s|m|h)$", var.cluster_readiness_timeout))
+    error_message = "Cluster readiness timeout must be a valid duration string (e.g., '30s', '5m', '1h')."
+  }
 }
 
 # Flux CD Configuration
