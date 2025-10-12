@@ -44,8 +44,8 @@ module "eks" {
   external_dns_provider           = "aws"
   external_dns_log_level          = "info"
 
-  # Helm Deployments Configuration - ENABLED for GitOps
-  enable_helm_deployments = true
+  # Helm Deployments Configuration - Use variable
+  enable_helm_deployments = var.enable_helm_deployments
 
   # Flux CD Configuration - Complete GitOps setup
   enable_flux_cd                = var.enable_flux_cd
