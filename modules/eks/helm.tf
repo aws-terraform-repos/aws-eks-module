@@ -85,11 +85,32 @@ resource "helm_release" "external_dns" {
   ]
 }
 
+# Flux CD Namespace
+resource "kubernetes_namespace" "flux_system" {
+  count = var.enable_helm_deployments && var.enable_flux_cd ? 1 : 0
+
+  depends_on = [
+    time_sleep.wait_for_cluster,
+    aws_eks_node_group.this
+  ]
+
+  metadata {
+    name = var.flux_cd_namespace
+    labels = {
+      "app.kubernetes.io/instance" = "flux-system"
+      "app.kubernetes.io/part-of"  = "flux"
+      "pod-security.kubernetes.io/warn"        = "restricted"
+      "pod-security.kubernetes.io/warn-version" = "latest"
+    }
+  }
+}
+
 # Flux CD Helm Release
 resource "helm_release" "flux_cd" {
   count = var.enable_helm_deployments && var.enable_flux_cd ? 1 : 0
 
   depends_on = [
+    kubernetes_namespace.flux_system,
     time_sleep.wait_for_cluster,
     aws_iam_role.flux_cd,
     aws_eks_node_group.this
@@ -102,7 +123,7 @@ resource "helm_release" "flux_cd" {
   version          = var.flux_cd_chart_version
   timeout          = var.helm_timeout
   wait             = var.wait_for_ready
-  create_namespace = true
+  create_namespace = false  # We're creating it explicitly above
 
   values = [
     yamlencode({
@@ -198,20 +219,23 @@ resource "helm_release" "flux_cd" {
         }
       }
 
-      # Service Account with IRSA
+      # Disable monitoring components (requires Prometheus Operator)
+      prometheus = {
+        podMonitor = {
+          create = false
+        }
+        serviceMonitor = {
+          create = false
+        }
+      }
+
+      # Service Account with IRSA annotation
       serviceAccount = {
         create = true
         name   = "flux-cd"
         annotations = var.enable_irsa ? {
           "eks.amazonaws.com/role-arn" = aws_iam_role.flux_cd[0].arn
         } : {}
-      }
-
-      # Monitoring
-      prometheus = {
-        podMonitor = {
-          create = true
-        }
       }
 
       # Policies
@@ -222,11 +246,23 @@ resource "helm_release" "flux_cd" {
   ]
 }
 
+# Wait for Flux CD CRDs to be installed
+resource "time_sleep" "wait_for_flux_crds" {
+  count = var.enable_helm_deployments && var.enable_flux_cd ? 1 : 0
+
+  depends_on = [helm_release.flux_cd]
+
+  create_duration = "30s"
+}
+
 # Git Repository Source (if repository URL is provided)
 resource "kubernetes_manifest" "flux_git_repository" {
   count = var.enable_helm_deployments && var.enable_flux_cd && var.flux_cd_git_repository_url != null ? 1 : 0
 
-  depends_on = [helm_release.flux_cd]
+  depends_on = [
+    helm_release.flux_cd,
+    time_sleep.wait_for_flux_crds
+  ]
 
   manifest = {
     apiVersion = "source.toolkit.fluxcd.io/v1"
@@ -235,16 +271,17 @@ resource "kubernetes_manifest" "flux_git_repository" {
       name      = "${var.cluster_name}-config"
       namespace = var.flux_cd_namespace
     }
-    spec = {
+    spec = merge({
       interval = var.flux_cd_git_repository_interval
       ref = {
         branch = var.flux_cd_git_repository_branch
       }
       url = var.flux_cd_git_repository_url
-      secretRef = var.flux_cd_git_auth_secret_name != null ? {
+    }, var.flux_cd_git_auth_secret_name != null ? {
+      secretRef = {
         name = var.flux_cd_git_auth_secret_name
-      } : null
-    }
+      }
+    } : {})
   }
 }
 
