@@ -52,42 +52,18 @@ metadata:
   namespace: default
   annotations:
     # AWS Load Balancer Controller annotations
-    kubernetes.io/ingress.class: alb
     alb.ingress.kubernetes.io/scheme: internet-facing
     alb.ingress.kubernetes.io/target-type: ip
-    alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}, {"HTTPS": 443}]'
-    alb.ingress.kubernetes.io/ssl-redirect: "443"
+    alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}]'
+    alb.ingress.kubernetes.io/subnets: subnet-001eb3b8a14120a4a,subnet-04f8eaf80db84f2f1,subnet-0c8df0fe25da37ca3,subnet-0ab6444f824031836,subnet-0a3761d6f3d555d9e,subnet-0659fc479f457e883
 
     # ExternalDNS annotations
-    external-dns.alpha.kubernetes.io/hostname: app.example.com
+    external-dns.alpha.kubernetes.io/hostname: nginx.flux.devops.com
     external-dns.alpha.kubernetes.io/ttl: "300"
 spec:
+  ingressClassName: alb
   rules:
-    - host: app.example.com
-      http:
-        paths:
-          - path: /
-            pathType: Prefix
-            backend:
-              service:
-                name: sample-app-service
-                port:
-                  number: 80
----
-# Example for subdomain
-apiVersion: networking.k8s.io/v1
-kind: Ingress
-metadata:
-  name: api-app-ingress
-  namespace: default
-  annotations:
-    kubernetes.io/ingress.class: alb
-    alb.ingress.kubernetes.io/scheme: internet-facing
-    alb.ingress.kubernetes.io/target-type: ip
-    external-dns.alpha.kubernetes.io/hostname: api.dev.example.com
-spec:
-  rules:
-    - host: api.dev.example.com
+    - host: nginx.flux.devops.com
       http:
         paths:
           - path: /
