@@ -97,9 +97,9 @@ resource "kubernetes_namespace" "flux_system" {
   metadata {
     name = var.flux_cd_namespace
     labels = {
-      "app.kubernetes.io/instance" = "flux-system"
-      "app.kubernetes.io/part-of"  = "flux"
-      "pod-security.kubernetes.io/warn"        = "restricted"
+      "app.kubernetes.io/instance"              = "flux-system"
+      "app.kubernetes.io/part-of"               = "flux"
+      "pod-security.kubernetes.io/warn"         = "restricted"
       "pod-security.kubernetes.io/warn-version" = "latest"
     }
   }
@@ -123,7 +123,7 @@ resource "helm_release" "flux_cd" {
   version          = var.flux_cd_chart_version
   timeout          = var.helm_timeout
   wait             = var.wait_for_ready
-  create_namespace = false  # We're creating it explicitly above
+  create_namespace = false # We're creating it explicitly above
 
   values = [
     yamlencode({
@@ -277,7 +277,7 @@ resource "kubernetes_manifest" "flux_git_repository" {
         branch = var.flux_cd_git_repository_branch
       }
       url = var.flux_cd_git_repository_url
-    }, var.flux_cd_git_auth_secret_name != null ? {
+      }, var.flux_cd_git_auth_secret_name != null ? {
       secretRef = {
         name = var.flux_cd_git_auth_secret_name
       }
