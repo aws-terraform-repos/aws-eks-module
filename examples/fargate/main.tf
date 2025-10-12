@@ -14,15 +14,11 @@ module "eks" {
   subnet_tags = var.subnet_tags
   subnet_ids  = var.subnet_ids
 
-  # Node Group Configuration - Small node group for system components
-  # Some components like EBS CSI driver require nodes
-  node_group_instance_types = var.node_group_instance_types
-  node_group_desired_size   = var.node_group_desired_size
-  node_group_max_size       = var.node_group_max_size
-  node_group_min_size       = var.node_group_min_size
-  node_group_capacity_type  = "ON_DEMAND"
-  node_group_ami_type       = "AL2023_x86_64_STANDARD"
-  node_group_disk_size      = 20
+  # Node Groups Configuration - pass through the node_groups variable
+  node_groups = var.node_groups
+
+  # Fargate Profiles Configuration - pass through the fargate_profiles variable
+  fargate_profiles = var.fargate_profiles
 
   # Security Configuration
   endpoint_private_access = true

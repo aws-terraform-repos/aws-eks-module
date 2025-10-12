@@ -50,31 +50,6 @@ variable "subnet_ids" {
   default     = null
 }
 
-# Node Group Variables - Small node group for system components that require nodes
-variable "node_group_instance_types" {
-  description = "Instance types for the EKS node group (small for system components)"
-  type        = list(string)
-  default     = ["t3.small"]
-}
-
-variable "node_group_desired_size" {
-  description = "Desired number of nodes in the node group"
-  type        = number
-  default     = 1
-}
-
-variable "node_group_max_size" {
-  description = "Maximum number of nodes in the node group"
-  type        = number
-  default     = 2
-}
-
-variable "node_group_min_size" {
-  description = "Minimum number of nodes in the node group"
-  type        = number
-  default     = 1
-}
-
 variable "public_access_cidrs" {
   description = "List of CIDR blocks that can access the public API server endpoint"
   type        = list(string)

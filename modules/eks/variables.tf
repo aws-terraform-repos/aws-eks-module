@@ -129,6 +129,39 @@ variable "ssh_access_cidrs" {
   default     = []
 }
 
+# Fargate Configuration Variables
+variable "fargate_profiles" {
+  description = "Map of Fargate profiles to create"
+  type = map(object({
+    selectors = list(object({
+      namespace = string
+      labels    = optional(map(string), {})
+    }))
+    subnet_ids = optional(list(string), null)
+    tags       = optional(map(string), {})
+  }))
+  default = {}
+}
+
+variable "node_groups" {
+  description = "Map of node groups to create"
+  type = map(object({
+    desired_size   = number
+    max_size       = number
+    min_size       = number
+    instance_types = list(string)
+    capacity_type  = optional(string, "ON_DEMAND")
+    labels         = optional(map(string), {})
+    taints = optional(list(object({
+      key    = string
+      value  = string
+      effect = string
+    })), [])
+    tags = optional(map(string), {})
+  }))
+  default = {}
+}
+
 variable "ssh_key_name" {
   description = "EC2 Key Pair name for SSH access to worker nodes"
   type        = string

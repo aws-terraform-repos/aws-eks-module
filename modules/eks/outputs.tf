@@ -165,3 +165,26 @@ output "helm_flux_cd_status" {
   description = "Status of the Flux CD Helm release"
   value       = var.enable_helm_deployments && var.enable_flux_cd ? helm_release.flux_cd[0].status : "not_deployed"
 }
+
+# Fargate Profiles outputs
+output "fargate_profiles" {
+  description = "Map of Fargate profile attributes"
+  value = {
+    for k, v in aws_eks_fargate_profile.this : k => {
+      arn                    = v.arn
+      status                 = v.status
+      pod_execution_role_arn = v.pod_execution_role_arn
+    }
+  }
+}
+
+# Combined compute configuration summary
+output "compute_config" {
+  description = "Summary of compute configuration (node groups and Fargate profiles)"
+  value = {
+    node_groups_count      = length(aws_eks_node_group.this)
+    fargate_profiles_count = length(aws_eks_fargate_profile.this)
+    node_group_names       = keys(aws_eks_node_group.this)
+    fargate_profile_names  = keys(aws_eks_fargate_profile.this)
+  }
+}
