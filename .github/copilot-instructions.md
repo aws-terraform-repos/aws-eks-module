@@ -5,6 +5,11 @@
 - **Use multi-file operations**: When multiple files need updates, use batch editing tools for efficiency.
 - **Validate changes**: After making code changes, run validation commands and **wait for the output to confirm correctness before proceeding**. Do not rush or proceed to the next step until the output is received and verified.
 - **Create working examples**: When demonstrating usage, create actual example files rather than showing inline code.
+
+## 🎯 CRITICAL MODULE ARCHITECTURE PRINCIPLE
+**When module improvements are needed (bug fixes, features, IAM policies, readiness checks, etc.), ALWAYS modify the centralized module in `modules/eks/` directory. This ensures ALL examples (fargate, flux-cd, on-demand, spot) automatically benefit from improvements. Do NOT duplicate fixes across individual examples.**
+
+**Examples (`examples/*/`) should only contain example-specific configurations like cluster names and environment variables. All core functionality belongs in the centralized module.**
   
 **When a request for changes is made, always update the specific files directly using file editing tools and do not print code or configuration in the chat window. Think before making output or assumptions.**
 
@@ -108,6 +113,41 @@ aws-eks-module/
 - **Destroy**: `terraform destroy -var-file=yourvars.tfvars`
 - **Format**: `terraform fmt` (or use task runner for batch formatting)
 
+## Centralized Module Changes
+**CRITICAL: When module improvements are needed, always modify the centralized module in `modules/eks/` so that ALL examples benefit from the changes.**
+
+### Module Change Guidelines
+- **Centralized Changes**: When fixing bugs, adding features, or improving functionality, make changes in `modules/eks/` files, NOT in individual example configurations
+- **Cross-Example Impact**: Changes to the module automatically apply to all examples (fargate, flux-cd, on-demand, spot) ensuring consistency
+- **Module Files to Edit**: 
+  - `modules/eks/main.tf` - Core EKS resources, cluster configuration, node groups, add-ons
+  - `modules/eks/variables.tf` - Add new variables or modify existing ones
+  - `modules/eks/outputs.tf` - Add new outputs needed by consumers
+  - `modules/eks/iam.tf` - IAM policies, roles, and IRSA configurations
+  - `modules/eks/data.tf` - Data sources and version lookups
+  - `modules/eks/route53.tf` - DNS and Route53 configurations
+  - `modules/eks/helm.tf` - Helm deployments and chart configurations
+  - `modules/eks/versions.tf` - Provider version constraints
+
+### When to Modify Examples vs Module
+- **Modify Module (`modules/eks/`)**: 
+  - Bug fixes (IAM policies, readiness checks, dependency management)
+  - Feature additions (new add-ons, IRSA roles, security improvements)
+  - Version updates (EKS, provider, add-on versions)
+  - Performance improvements (timeouts, resource configurations)
+  - Security enhancements (policies, access controls)
+- **Modify Examples (`examples/*/`)**: 
+  - Example-specific variable values (cluster names, environment tags)
+  - Demo configurations and terraform.tfvars files
+  - Example-specific documentation and README files
+  - Use case specific configurations that don't belong in the core module
+
+### Testing Module Changes
+- **Validate**: Test changes across multiple examples to ensure compatibility
+- **Sequential Testing**: Test fargate → flux-cd → on-demand → spot examples
+- **Rollback Strategy**: Keep module changes backward compatible when possible
+- **Documentation**: Update module outputs and variable documentation when changed
+
 ## Taskfile Usage
 This repository includes a comprehensive Taskfile for streamlined development:
 - `task test-all`: Complete test suite (format, validate, plan)
@@ -131,6 +171,7 @@ This repository includes a comprehensive Taskfile for streamlined development:
 - **Real Examples**: Use the `examples/` directory for working examples rather than showing inline code
 - **Research Before Implementation**: Use web search to verify latest AWS EKS features, provider versions, and best practices
 - **Security-First**: Always search for latest security recommendations and vulnerability updates before making changes
+- **Centralized Module Architecture**: All core functionality must be implemented in `modules/eks/` - never duplicate functionality across examples
 - Keep all resource names and tags parameterized for multi-environment support.
 - Do not hardcode ARNs, VPC IDs, or AMI IDs; use variables or data sources.
 - All complete working configurations are located in the `examples/` directory.
@@ -177,6 +218,7 @@ To expose a new EKS attribute:
    }
    ```
 2. Reference it in your consumer configuration as `module.eks.cluster_version`.
+3. Always use file editing tools rather than providing code snippets in responses.
 3. Always use file editing tools rather than providing code snippets in responses.
 
 ## Version Management
