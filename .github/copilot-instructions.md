@@ -1,10 +1,20 @@
 # Copilot Instructions
 
-## Code Modification Guidelines
+- **Always edit files directly**: When code changes are needed, use file editing tools to make actual changes to the codebase.
+- **Never provide code snippets in chat**: Instead of showing code in responses, create or modify files using appropriate tools.
+- **Use multi-file operations**: When multiple files need updates, use batch editing tools for efficiency.
+- **Validate changes**: After making code changes, run validation commands and **wait for the output to confirm correctness before proceeding**. Do not rush or proceed to the next step until the output is received and verified.
+- **Create working examples**: When demonstrating usage, create actual example files rather than showing inline code.
+  
+**When a request for changes is made, always update the specific files directly using file editing tools and do not print code or configuration in the chat window. Think before making output or assumptions.**
+
+**Always use any tool needed to perform research and first search the internet to find if there is any solution available before making changes. Use the fetch tool to perform this research.**
+
+**Always double check your work before considering a task complete. Do not hallucinate and make sure the changes you make will work. If needed, think twice and double check before making any changes.**
 - **Always edit files directly**: When code changes are needed, use file editing tools to make actual changes to the codebase
 - **Never provide code snippets in chat**: Instead of showing code in responses, create or modify files using appropriate tools
 - **Use multi-file operations**: When multiple files need updates, use batch editing tools for efficiency
-- **Validate changes**: After making code changes, run validation commands to ensure correctness
+- **Validate changes**: After making code changes, run validation commands and **wait for the output to confirm correctness before proceeding**. Do not rush or proceed to the next step until the output is received and verified.
 - **Create working examples**: When demonstrating usage, create actual example files rather than showing inline code
 
 ## Research and Information Guidelines
@@ -90,7 +100,7 @@ aws-eks-module/
 - **Task Runner**: Use `task test-all` for complete validation (requires Task)
 - **Direct Editing**: Use file editing tools to modify configurations, variables, and resources
 - **Batch Operations**: When multiple files need changes, use multi-file editing tools for efficiency
-- **Validation**: After file changes, run `terraform validate` and `terraform plan` to verify correctness
+- **Validation**: After file changes, run `terraform validate` and `terraform plan` and **wait for the output to confirm correctness before proceeding**. Do not rush or proceed to the next step until the output is received and verified.
 - **Version Verification**: Always check for latest provider and add-on versions using web search
 - **Initialize**: `terraform init` (in module or example directory)
 - **Plan**: `terraform plan -var-file=yourvars.tfvars`
