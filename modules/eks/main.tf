@@ -117,17 +117,19 @@ resource "aws_eks_cluster" "this" {
   })
 }
 
-# EKS Node Group
+# EKS Node Groups (dynamic for multiple node groups)
 resource "aws_eks_node_group" "this" {
+  for_each = var.node_groups
+
   cluster_name    = aws_eks_cluster.this.name
-  node_group_name = "${var.cluster_name}-node-group"
+  node_group_name = "${var.cluster_name}-${each.key}-node-group"
   node_role_arn   = aws_iam_role.node_group.arn
   subnet_ids      = local.subnet_ids
 
   scaling_config {
-    desired_size = var.node_group_desired_size
-    max_size     = var.node_group_max_size
-    min_size     = var.node_group_min_size
+    desired_size = each.value.desired_size
+    max_size     = each.value.max_size
+    min_size     = each.value.min_size
   }
 
   update_config {
@@ -143,14 +145,59 @@ resource "aws_eks_node_group" "this" {
   }
 
   ami_type       = var.node_group_ami_type
-  capacity_type  = var.node_group_capacity_type
+  capacity_type  = each.value.capacity_type
   disk_size      = var.node_group_disk_size
-  instance_types = var.node_group_instance_types
+  instance_types = each.value.instance_types
+
+  labels = each.value.labels
+
+  dynamic "taint" {
+    for_each = each.value.taints
+    content {
+      key    = taint.value.key
+      value  = taint.value.value
+      effect = taint.value.effect
+    }
+  }
+
+  tags = merge(var.tags, each.value.tags, {
+    Name = "${var.cluster_name}-${each.key}-node-group"
+  })
 
   # Ensure that IAM Role permissions are created before and deleted after EKS Node Group handling.
+  # Also ensure cluster is ready before creating node groups.
   depends_on = [
+    aws_eks_cluster.this,
     aws_iam_role_policy_attachment.node_group_AmazonEKSWorkerNodePolicy,
-    aws_iam_role_policy_attachment.node_group_AmazonEKS_CNI_Policy
+    aws_iam_role_policy_attachment.node_group_AmazonEKS_CNI_Policy,
+    aws_iam_role_policy_attachment.node_group_AmazonEC2ContainerRegistryReadOnly
+  ]
+}
+
+# EKS Fargate Profiles (dynamic for multiple profiles)
+resource "aws_eks_fargate_profile" "this" {
+  for_each = var.fargate_profiles
+
+  cluster_name           = aws_eks_cluster.this.name
+  fargate_profile_name   = "${var.cluster_name}-${each.key}-profile"
+  pod_execution_role_arn = aws_iam_role.fargate_profile.arn
+  subnet_ids             = each.value.subnet_ids != null ? each.value.subnet_ids : local.subnet_ids
+
+  dynamic "selector" {
+    for_each = each.value.selectors
+    content {
+      namespace = selector.value.namespace
+      labels    = selector.value.labels
+    }
+  }
+
+  tags = merge(var.tags, each.value.tags, {
+    Name = "${var.cluster_name}-${each.key}-fargate-profile"
+  })
+
+  depends_on = [
+    aws_eks_cluster.this,
+    aws_iam_role_policy_attachment.fargate_profile_AmazonEKSFargatePodExecutionRolePolicy
   ]
 }
 
@@ -165,7 +212,7 @@ resource "aws_eks_addon" "vpc_cni" {
   resolve_conflicts_on_update = "OVERWRITE"
   service_account_role_arn    = var.enable_irsa ? aws_iam_role.vpc_cni[0].arn : null
 
-  depends_on = [aws_eks_node_group.this]
+  depends_on = [aws_eks_node_group.this, aws_eks_fargate_profile.this]
 
   tags = var.tags
 
@@ -184,7 +231,7 @@ resource "aws_eks_addon" "kube_proxy" {
   resolve_conflicts_on_create = "OVERWRITE"
   resolve_conflicts_on_update = "OVERWRITE"
 
-  depends_on = [aws_eks_node_group.this]
+  depends_on = [aws_eks_node_group.this, aws_eks_fargate_profile.this]
 
   tags = var.tags
 
@@ -202,7 +249,7 @@ resource "aws_eks_addon" "coredns" {
   resolve_conflicts_on_create = "OVERWRITE"
   resolve_conflicts_on_update = "OVERWRITE"
 
-  depends_on = [aws_eks_node_group.this]
+  depends_on = [aws_eks_node_group.this, aws_eks_fargate_profile.this]
 
   tags = var.tags
 
@@ -222,7 +269,8 @@ resource "aws_eks_addon" "ebs_csi_driver" {
   service_account_role_arn    = var.enable_irsa ? aws_iam_role.ebs_csi_driver[0].arn : null
   depends_on = [
     aws_iam_role.ebs_csi_driver,
-    aws_eks_node_group.this
+    aws_eks_node_group.this,
+    aws_eks_fargate_profile.this
   ]
   lifecycle {
     ignore_changes = [

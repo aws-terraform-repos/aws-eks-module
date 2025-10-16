@@ -129,6 +129,39 @@ variable "ssh_access_cidrs" {
   default     = []
 }
 
+# Fargate Configuration Variables
+variable "fargate_profiles" {
+  description = "Map of Fargate profiles to create"
+  type = map(object({
+    selectors = list(object({
+      namespace = string
+      labels    = optional(map(string), {})
+    }))
+    subnet_ids = optional(list(string), null)
+    tags       = optional(map(string), {})
+  }))
+  default = {}
+}
+
+variable "node_groups" {
+  description = "Map of node groups to create"
+  type = map(object({
+    desired_size   = number
+    max_size       = number
+    min_size       = number
+    instance_types = list(string)
+    capacity_type  = optional(string, "ON_DEMAND")
+    labels         = optional(map(string), {})
+    taints = optional(list(object({
+      key    = string
+      value  = string
+      effect = string
+    })), [])
+    tags = optional(map(string), {})
+  }))
+  default = {}
+}
+
 variable "ssh_key_name" {
   description = "EC2 Key Pair name for SSH access to worker nodes"
   type        = string
@@ -256,10 +289,87 @@ variable "helm_timeout" {
   description = "Timeout for Helm deployments in seconds"
   type        = number
   default     = 600
+
+  validation {
+    condition     = var.helm_timeout >= 300 && var.helm_timeout <= 1800
+    error_message = "Helm timeout must be between 300 (5 minutes) and 1800 (30 minutes) seconds."
+  }
 }
 
 variable "wait_for_ready" {
   description = "Whether to wait for Helm deployments to be ready"
   type        = bool
   default     = true
+}
+
+variable "cluster_readiness_timeout" {
+  description = "Time to wait for cluster and node groups to be ready before Helm deployments (e.g., '60s', '5m')"
+  type        = string
+  default     = "60s"
+
+  validation {
+    condition     = can(regex("^[0-9]+(s|m|h)$", var.cluster_readiness_timeout))
+    error_message = "Cluster readiness timeout must be a valid duration string (e.g., '30s', '5m', '1h')."
+  }
+}
+
+# Flux CD Configuration
+variable "enable_flux_cd" {
+  description = "Whether to enable Flux CD IRSA role and Helm deployment"
+  type        = bool
+  default     = false
+}
+
+variable "flux_cd_chart_version" {
+  description = "Helm chart version for Flux CD"
+  type        = string
+  default     = null
+}
+
+variable "flux_cd_namespace" {
+  description = "Kubernetes namespace for Flux CD"
+  type        = string
+  default     = "flux-system"
+}
+
+variable "flux_cd_git_repository_url" {
+  description = "Git repository URL for Flux CD to monitor"
+  type        = string
+  default     = null
+}
+
+variable "flux_cd_git_repository_branch" {
+  description = "Git repository branch for Flux CD to monitor"
+  type        = string
+  default     = "main"
+}
+
+variable "flux_cd_git_repository_path" {
+  description = "Path within the Git repository for Flux CD to monitor"
+  type        = string
+  default     = "./"
+}
+
+variable "flux_cd_git_repository_interval" {
+  description = "Interval for Flux CD to check the Git repository"
+  type        = string
+  default     = "1m"
+}
+
+variable "flux_cd_git_auth_secret_name" {
+  description = "Name of the Kubernetes secret containing Git authentication details"
+  type        = string
+  default     = null
+}
+
+variable "flux_cd_image_automation" {
+  description = "Whether to enable Flux CD image automation"
+  type        = bool
+  default     = false
+}
+
+variable "flux_cd_notification_providers" {
+  description = "List of notification providers for Flux CD alerts"
+  type        = list(string)
+  default     = []
 }

@@ -12,6 +12,12 @@ data "tls_certificate" "eks" {
   url = aws_eks_cluster.this.identity[0].oidc[0].issuer
 }
 
+# Verify cluster is ready before proceeding with dependent resources
+data "aws_eks_cluster" "cluster_status" {
+  depends_on = [aws_eks_cluster.this]
+  name       = aws_eks_cluster.this.name
+}
+
 # IAM policy documents
 data "aws_iam_policy_document" "cluster_assume_role_policy" {
   statement {
@@ -115,7 +121,7 @@ data "aws_subnets" "selected" {
 
 # Fallback: get all subnets if no private subnets found
 data "aws_subnets" "all_subnets" {
-  count = var.subnet_ids == null && length(data.aws_subnets.selected[0].ids) == 0 ? 1 : 0
+  count = var.subnet_ids == null && length(try(data.aws_subnets.selected[0].ids, [])) == 0 ? 1 : 0
 
   filter {
     name   = "vpc-id"
@@ -123,14 +129,34 @@ data "aws_subnets" "all_subnets" {
   }
 }
 
+# Private subnets specifically for Fargate profiles
+data "aws_subnets" "private_subnets" {
+  filter {
+    name   = "vpc-id"
+    values = [local.vpc_id]
+  }
+
+  # Look for private subnets (exclude public by avoiding subnets with MapPublicIpOnLaunch)
+  filter {
+    name   = "map-public-ip-on-launch"
+    values = ["false"]
+  }
+}
+
 # Get subnet details for AZ filtering
 data "aws_subnet" "selected_subnets" {
-  for_each = var.subnet_ids == null ? toset(
+  for_each = var.subnet_ids != null ? toset(var.subnet_ids) : toset(
     length(try(data.aws_subnets.selected[0].ids, [])) > 0 ?
     data.aws_subnets.selected[0].ids :
     try(data.aws_subnets.all_subnets[0].ids, [])
-  ) : toset(var.subnet_ids)
+  )
   id = each.value
+}
+
+# Get details for private subnets specifically
+data "aws_subnet" "private_subnets" {
+  for_each = toset(data.aws_subnets.private_subnets.ids)
+  id       = each.value
 }
 
 # EKS supported availability zones (excluding us-east-1e)
@@ -159,5 +185,11 @@ locals {
   subnet_ids = [
     for subnet_id in local.all_discovered_subnet_ids :
     subnet_id if contains(local.eks_supported_azs, data.aws_subnet.selected_subnets[subnet_id].availability_zone)
+  ]
+
+  # Private subnet IDs for Fargate profiles (Fargate requires private subnets only)
+  private_subnet_ids = [
+    for subnet_id in data.aws_subnets.private_subnets.ids :
+    subnet_id if contains(local.eks_supported_azs, data.aws_subnet.private_subnets[subnet_id].availability_zone)
   ]
 }

@@ -16,8 +16,17 @@ aws-eks-module/
 │   ├── helm.tf          # Helm deployment guides
 │   └── versions.tf      # Provider requirements
 ├── main.tf              # 🚀 Complete DNS-enabled EKS deployment
-├── manifests/           # 🎨 Sample Kubernetes manifests with DNS
+├── manifests/           # 🎨 Sample Kubernetes manifests with DNS & Flux CD
+│   ├── nginx-alb-ingress.yaml
+│   ├── nginx-test.yaml
+│   ├── sample-app-with-dns.yaml
+│   ├── storage-test.yaml
+│   └── flux-cd-examples.yaml  # Flux CD configuration examples
 ├── examples/            # 📖 Additional usage examples
+│   ├── fargate/
+│   ├── on-demand/
+│   ├── spot/
+│   └── flux-cd/         # Complete Flux CD GitOps example
 ├── README.md            # This file
 ├── TASKFILE.md          # Development workflow guide
 └── Taskfile.yml         # Task automation
@@ -78,7 +87,8 @@ The output will provide complete step-by-step instructions for:
 - **🌍 Route53 Integration** - Automatic hosted zone creation and management
 - **🔄 ExternalDNS** - Automatic DNS record management for ingresses and services
 - **⚖️ Load Balancer Controller** - AWS ALB/NLB integration with Helm deployment
-- **🔍 Smart VPC/Subnet Discovery** - Multiple discovery methods (name, tags, explicit IDs)
+- **� Flux CD GitOps** - Continuous delivery with automated Git repository sync and image updates
+- **�🔍 Smart VPC/Subnet Discovery** - Multiple discovery methods (name, tags, explicit IDs)
 - **🔐 IRSA Support** - IAM Roles for Service Accounts enabled by default
 - **🛡️ Security Groups** - Pre-configured with best practices
 - **📦 EBS CSI Driver** - Auto-configured with proper IAM permissions
@@ -90,16 +100,26 @@ The output will provide complete step-by-step instructions for:
 
 1. **Deploy Infrastructure** → Creates EKS cluster + Route53 hosted zones + IAM roles
 2. **Update Domain Registrar** → Point your domain to the provided name servers  
-3. **Install Helm Charts** → ExternalDNS + AWS Load Balancer Controller
-4. **Deploy Applications** → Ingress resources automatically get DNS records
-5. **Automatic Management** → DNS records created/updated/deleted automatically
+3. **Install Helm Charts** → ExternalDNS + AWS Load Balancer Controller + Flux CD
+4. **Configure GitOps** → Flux CD monitors your Git repository for changes
+5. **Deploy Applications** → Ingress resources automatically get DNS records
+6. **Automatic Management** → DNS records and deployments managed automatically
+
+## 🚀 GitOps Workflow with Flux CD
+
+1. **Code Changes** → Developer pushes to Git repository
+2. **Flux Detection** → Flux CD detects changes and pulls updates
+3. **Automatic Deployment** → Kubernetes manifests applied to cluster
+4. **Image Automation** → New container images trigger automatic updates
+5. **DNS Updates** → ExternalDNS creates DNS records for new services
+6. **Monitoring** → Flux CD provides deployment status and notifications
 
 ## 📋 Root Configuration Example
 
 The root `main.tf` provides a complete DNS-enabled EKS deployment. Here's what it includes:
 
 ```hcl
-# Complete EKS cluster with DNS automation
+# Complete EKS cluster with DNS automation and GitOps
 module "eks" {
   source = "./modules/eks"
 
@@ -117,6 +137,12 @@ module "eks" {
   # Enable DNS controllers
   enable_external_dns             = true
   enable_load_balancer_controller = true
+
+  # GitOps with Flux CD
+  enable_flux_cd                = true
+  flux_cd_git_repository_url    = "https://github.com/your-org/k8s-manifests"
+  flux_cd_git_repository_branch = "main"
+  flux_cd_image_automation      = true
 
   # Security configuration
   public_access_cidrs = ["your-ip/32"]
@@ -276,6 +302,10 @@ module "eks" {
 | node_group_capacity_type | Type of capacity associated with the EKS Node Group. Valid values: ON_DEMAND, SPOT | `string` | `"ON_DEMAND"` | no |
 | node_group_disk_size | Disk size in GiB for worker nodes | `number` | `20` | no |
 | enable_irsa | Enable IAM Roles for Service Accounts | `bool` | `true` | no |
+| enable_flux_cd | Whether to enable Flux CD IRSA role and Helm deployment | `bool` | `false` | no |
+| flux_cd_git_repository_url | Git repository URL for Flux CD to monitor | `string` | `null` | no |
+| flux_cd_git_repository_branch | Git repository branch for Flux CD to monitor | `string` | `"main"` | no |
+| flux_cd_image_automation | Whether to enable Flux CD image automation | `bool` | `false` | no |
 | tags | A map of tags to add to all resources | `map(string)` | `{}` | no |
 
 ## Outputs
@@ -291,6 +321,9 @@ module "eks" {
 | ebs_csi_driver_role_arn | ARN of the EBS CSI driver IAM role |
 | node_security_group_id | ID of the node shared security group |
 | cluster_security_group_id | Security group ID attached to the cluster control plane |
+| flux_cd_role_arn | ARN of the Flux CD IAM role |
+| flux_cd_namespace | Kubernetes namespace where Flux CD is installed |
+| flux_cd_setup_instructions | Instructions for setting up Flux CD with your Git repository |
 
 ## Post-Deployment
 
@@ -338,10 +371,10 @@ kubectl describe serviceaccount ebs-csi-controller-sa -n kube-system
 
 See the `examples/` directory for complete working examples:
 
-- **[Simple Cluster](./examples/simple-cluster/)**: Minimal configuration for quick deployment
-- **[VPC Name Discovery](./examples/vpc-name-discovery/)**: VPC discovery by name tag
-- **[Tag-Based Discovery](./examples/tag-based-discovery/)**: VPC and subnet discovery by custom tags
-- **[Explicit IDs](./examples/explicit-ids/)**: Explicit VPC and subnet IDs for maximum control
+- **[Flux CD GitOps](./examples/flux-cd/)**: Complete GitOps setup with Flux CD for continuous deployment
+- **[Fargate](./examples/fargate/)**: Serverless containers with AWS Fargate
+- **[On-Demand](./examples/on-demand/)**: Traditional on-demand EC2 instances  
+- **[Spot](./examples/spot/)**: Cost-optimized with EC2 Spot instances
 
 Each example includes:
 - Complete Terraform configuration

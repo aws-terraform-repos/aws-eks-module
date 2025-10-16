@@ -25,46 +25,46 @@ tasks:
   validate-examples:
     desc: Validate all examples
     cmds:
-      - task: validate-simple-cluster
-      - task: validate-vpc-name-discovery
-      - task: validate-tag-based-discovery
-      - task: validate-explicit-ids
+      - task: validate-fargate
+      - task: validate-flux-cd
+      - task: validate-on-demand
+      - task: validate-spot
 
-  validate-simple-cluster:
-    desc: Validate simple-cluster example
-    dir: "{{.EXAMPLES_DIR}}/simple-cluster"
+  validate-fargate:
+    desc: Validate fargate example
+    dir: "{{.EXAMPLES_DIR}}/fargate"
     cmds:
-      - echo "🔍 Validating simple-cluster example..."
+      - echo "🔍 Validating fargate example..."
       - terraform init -upgrade
       - terraform validate
-      - echo "✅ simple-cluster validation complete"
+      - echo "✅ fargate validation complete"
 
-  validate-vpc-name-discovery:
-    desc: Validate vpc-name-discovery example
-    dir: "{{.EXAMPLES_DIR}}/vpc-name-discovery"
+  validate-flux-cd:
+    desc: Validate flux-cd example
+    dir: "{{.EXAMPLES_DIR}}/flux-cd"
     cmds:
-      - echo "🔍 Validating vpc-name-discovery example..."
+      - echo "🔍 Validating flux-cd example..."
       - terraform init -upgrade
       - terraform validate
-      - echo "✅ vpc-name-discovery validation complete"
+      - echo "✅ flux-cd validation complete"
 
-  validate-tag-based-discovery:
-    desc: Validate tag-based-discovery example
-    dir: "{{.EXAMPLES_DIR}}/tag-based-discovery"
+  validate-on-demand:
+    desc: Validate on-demand example
+    dir: "{{.EXAMPLES_DIR}}/on-demand"
     cmds:
-      - echo "🔍 Validating tag-based-discovery example..."
+      - echo "🔍 Validating on-demand example..."
       - terraform init -upgrade
       - terraform validate
-      - echo "✅ tag-based-discovery validation complete"
+      - echo "✅ on-demand validation complete"
 
-  validate-explicit-ids:
-    desc: Validate explicit-ids example
-    dir: "{{.EXAMPLES_DIR}}/explicit-ids"
+  validate-spot:
+    desc: Validate spot example
+    dir: "{{.EXAMPLES_DIR}}/spot"
     cmds:
-      - echo "🔍 Validating explicit-ids example..."
+      - echo "🔍 Validating spot example..."
       - terraform init -upgrade
       - terraform validate
-      - echo "✅ explicit-ids validation complete"
+      - echo "✅ spot validation complete"
 
   plan:
     desc: Plan the main module (requires vars)
@@ -75,94 +75,94 @@ tasks:
   plan-examples:
     desc: Plan all examples (dry-run to check syntax)
     cmds:
-      - task: plan-simple-cluster
-      - task: plan-vpc-name-discovery
-      - task: plan-tag-based-discovery
-      - task: plan-explicit-ids
+      - task: plan-fargate
+      - task: plan-flux-cd
+      - task: plan-on-demand
+      - task: plan-spot
 
-  plan-simple-cluster:
-    desc: Plan simple-cluster example
-    dir: "{{.EXAMPLES_DIR}}/simple-cluster"
+  plan-fargate:
+    desc: Plan fargate example
+    dir: "{{.EXAMPLES_DIR}}/fargate"
     cmds:
-      - echo "📋 Planning simple-cluster example..."
-      - terraform plan -var-file="terraform.tfvars.example" -out=tfplan || echo "⚠️  Plan failed - check variables and AWS credentials"
+      - echo "📋 Planning fargate example..."
+      - terraform plan -var-file="terraform.tfvars" -out=tfplan || echo "⚠️  Plan failed - check variables and AWS credentials"
 
-  plan-vpc-name-discovery:
-    desc: Plan vpc-name-discovery example
-    dir: "{{.EXAMPLES_DIR}}/vpc-name-discovery"
+  plan-flux-cd:
+    desc: Plan flux-cd example
+    dir: "{{.EXAMPLES_DIR}}/flux-cd"
     cmds:
-      - echo "📋 Planning vpc-name-discovery example..."
-      - terraform plan -var-file="terraform.tfvars.example" -out=tfplan || echo "⚠️  Plan failed - check variables and AWS credentials"
+      - echo "📋 Planning flux-cd example..."
+      - terraform plan -var-file="terraform.tfvars" -out=tfplan || echo "⚠️  Plan failed - check variables and AWS credentials"
 
-  plan-tag-based-discovery:
-    desc: Plan tag-based-discovery example
-    dir: "{{.EXAMPLES_DIR}}/tag-based-discovery"
+  plan-on-demand:
+    desc: Plan on-demand example
+    dir: "{{.EXAMPLES_DIR}}/on-demand"
     cmds:
-      - echo "📋 Planning tag-based-discovery example..."
-      - terraform plan -var-file="terraform.tfvars.example" -out=tfplan || echo "⚠️  Plan failed - check variables and AWS credentials"
+      - echo "📋 Planning on-demand example..."
+      - terraform plan -var-file="terraform.tfvars" -out=tfplan || echo "⚠️  Plan failed - check variables and AWS credentials"
 
-  plan-explicit-ids:
-    desc: Plan explicit-ids example
-    dir: "{{.EXAMPLES_DIR}}/explicit-ids"
+  plan-spot:
+    desc: Plan spot example
+    dir: "{{.EXAMPLES_DIR}}/spot"
     cmds:
-      - echo "📋 Planning explicit-ids example..."
-      - terraform plan -var-file="terraform.tfvars.example" -out=tfplan || echo "⚠️  Plan failed - check variables and AWS credentials"
+      - echo "📋 Planning spot example..."
+      - terraform plan -var-file="terraform.tfvars" -out=tfplan || echo "⚠️  Plan failed - check variables and AWS credentials"
 
-  apply-simple-cluster:
-    desc: Apply simple-cluster example
-    dir: "{{.EXAMPLES_DIR}}/simple-cluster"
+  apply-fargate:
+    desc: Apply fargate example
+    dir: "{{.EXAMPLES_DIR}}/fargate"
     cmds:
-      - echo "🚀 Applying simple-cluster example..."
-      - terraform apply -var-file="terraform.tfvars.example" {{.CLI_ARGS}}
+      - echo "🚀 Applying fargate example..."
+      - terraform apply -var-file="terraform.tfvars" {{.CLI_ARGS}}
 
-  apply-vpc-name-discovery:
-    desc: Apply vpc-name-discovery example
-    dir: "{{.EXAMPLES_DIR}}/vpc-name-discovery"
+  apply-flux-cd:
+    desc: Apply flux-cd example
+    dir: "{{.EXAMPLES_DIR}}/flux-cd"
     cmds:
-      - echo "🚀 Applying vpc-name-discovery example..."
-      - terraform apply -var-file="terraform.tfvars.example" {{.CLI_ARGS}}
+      - echo "🚀 Applying flux-cd example..."
+      - terraform apply -var-file="terraform.tfvars" {{.CLI_ARGS}}
 
-  apply-tag-based-discovery:
-    desc: Apply tag-based-discovery example
-    dir: "{{.EXAMPLES_DIR}}/tag-based-discovery"
+  apply-on-demand:
+    desc: Apply on-demand example
+    dir: "{{.EXAMPLES_DIR}}/on-demand"
     cmds:
-      - echo "🚀 Applying tag-based-discovery example..."
-      - terraform apply -var-file="terraform.tfvars.example" {{.CLI_ARGS}}
+      - echo "🚀 Applying on-demand example..."
+      - terraform apply -var-file="terraform.tfvars" {{.CLI_ARGS}}
 
-  apply-explicit-ids:
-    desc: Apply explicit-ids example
-    dir: "{{.EXAMPLES_DIR}}/explicit-ids"
+  apply-spot:
+    desc: Apply spot example
+    dir: "{{.EXAMPLES_DIR}}/spot"
     cmds:
-      - echo "🚀 Applying explicit-ids example..."
-      - terraform apply -var-file="terraform.tfvars.example" {{.CLI_ARGS}}
+      - echo "🚀 Applying spot example..."
+      - terraform apply -var-file="terraform.tfvars" {{.CLI_ARGS}}
 
-  destroy-simple-cluster:
-    desc: Destroy simple-cluster example
-    dir: "{{.EXAMPLES_DIR}}/simple-cluster"
+  destroy-fargate:
+    desc: Destroy fargate example
+    dir: "{{.EXAMPLES_DIR}}/fargate"
     cmds:
-      - echo "💥 Destroying simple-cluster example..."
-      - terraform destroy -var-file="terraform.tfvars.example" {{.CLI_ARGS}}
+      - echo "💥 Destroying fargate example..."
+      - terraform destroy -var-file="terraform.tfvars" {{.CLI_ARGS}}
 
-  destroy-vpc-name-discovery:
-    desc: Destroy vpc-name-discovery example
-    dir: "{{.EXAMPLES_DIR}}/vpc-name-discovery"
+  destroy-flux-cd:
+    desc: Destroy flux-cd example
+    dir: "{{.EXAMPLES_DIR}}/flux-cd"
     cmds:
-      - echo "💥 Destroying vpc-name-discovery example..."
-      - terraform destroy -var-file="terraform.tfvars.example" {{.CLI_ARGS}}
+      - echo "💥 Destroying flux-cd example..."
+      - terraform destroy -var-file="terraform.tfvars" {{.CLI_ARGS}}
 
-  destroy-tag-based-discovery:
-    desc: Destroy tag-based-discovery example
-    dir: "{{.EXAMPLES_DIR}}/tag-based-discovery"
+  destroy-on-demand:
+    desc: Destroy on-demand example
+    dir: "{{.EXAMPLES_DIR}}/on-demand"
     cmds:
-      - echo "💥 Destroying tag-based-discovery example..."
-      - terraform destroy -var-file="terraform.tfvars.example" {{.CLI_ARGS}}
+      - echo "💥 Destroying on-demand example..."
+      - terraform destroy -var-file="terraform.tfvars" {{.CLI_ARGS}}
 
-  destroy-explicit-ids:
-    desc: Destroy explicit-ids example
-    dir: "{{.EXAMPLES_DIR}}/explicit-ids"
+  destroy-spot:
+    desc: Destroy spot example
+    dir: "{{.EXAMPLES_DIR}}/spot"
     cmds:
-      - echo "💥 Destroying explicit-ids example..."
-      - terraform destroy -var-file="terraform.tfvars.example" {{.CLI_ARGS}}
+      - echo "💥 Destroying spot example..."
+      - terraform destroy -var-file="terraform.tfvars" {{.CLI_ARGS}}
 
   clean:
     desc: Clean all Terraform state and cache files
@@ -183,10 +183,10 @@ tasks:
       - echo "🔧 Initializing main module..."
       - terraform -chdir={{.MODULE_DIR}} init -upgrade
       - echo "🔧 Initializing examples..."
-      - terraform -chdir={{.EXAMPLES_DIR}}/simple-cluster init -upgrade
-      - terraform -chdir={{.EXAMPLES_DIR}}/vpc-name-discovery init -upgrade
-      - terraform -chdir={{.EXAMPLES_DIR}}/tag-based-discovery init -upgrade
-      - terraform -chdir={{.EXAMPLES_DIR}}/explicit-ids init -upgrade
+      - terraform -chdir={{.EXAMPLES_DIR}}/fargate init -upgrade
+      - terraform -chdir={{.EXAMPLES_DIR}}/flux-cd init -upgrade
+      - terraform -chdir={{.EXAMPLES_DIR}}/on-demand init -upgrade
+      - terraform -chdir={{.EXAMPLES_DIR}}/spot init -upgrade
       - echo "✅ All modules initialized"
 
   test-all:
@@ -204,6 +204,39 @@ tasks:
       - terraform-docs markdown table --output-file README-generated.md {{.MODULE_DIR}}
       - echo "📖 Documentation preview generated in README-generated.md"
 
+  format-check:
+    desc: Check if all Terraform files are properly formatted
+    cmds:
+      - terraform fmt -check -recursive {{.MODULE_DIR}}
+
+  validate-module:
+    desc: Validate only the centralized module
+    dir: "modules/eks"
+    cmds:
+      - echo "🔍 Validating centralized EKS module..."
+      - terraform init -upgrade
+      - terraform validate
+      - echo "✅ Module validation complete"
+
+  clean-examples:
+    desc: Clean only example directories
+    cmds:
+      - echo "🧹 Cleaning examples..."
+      - find {{.EXAMPLES_DIR}} -name ".terraform" -type d -exec rm -rf {} + 2>/dev/null || true
+      - find {{.EXAMPLES_DIR}} -name "terraform.tfstate*" -type f -delete 2>/dev/null || true
+      - find {{.EXAMPLES_DIR}} -name "tfplan" -type f -delete 2>/dev/null || true
+      - echo "✅ Examples cleanup complete"
+
+  init-examples:
+    desc: Initialize only example directories
+    cmds:
+      - echo "🔧 Initializing examples..."
+      - terraform -chdir={{.EXAMPLES_DIR}}/fargate init -upgrade
+      - terraform -chdir={{.EXAMPLES_DIR}}/flux-cd init -upgrade
+      - terraform -chdir={{.EXAMPLES_DIR}}/on-demand init -upgrade
+      - terraform -chdir={{.EXAMPLES_DIR}}/spot init -upgrade
+      - echo "✅ All examples initialized"
+
   security-scan:
     desc: Run security scan with tfsec (if available)
     cmds:
@@ -217,11 +250,11 @@ tasks:
 
   cost-estimate:
     desc: Estimate costs with infracost (if available)
-    dir: "{{.EXAMPLES_DIR}}/simple-cluster"
+    dir: "{{.EXAMPLES_DIR}}/on-demand"
     cmds:
       - |
         if command -v infracost >/dev/null 2>&1; then
-          echo "💰 Estimating costs for simple-cluster example..."
+          echo "💰 Estimating costs for on-demand example..."
           infracost breakdown --path .
         else
           echo "⚠️  infracost not found. Install from: https://www.infracost.io/docs/#quick-start"
@@ -233,22 +266,26 @@ tasks:
       - echo "🚀 AWS EKS Module Task Runner"
       - echo ""
       - echo "Common workflows:"
-      - echo "  task test-all # Complete test suite"
-      - echo "  task validate-examples # Validate all examples"
-      - echo "  task plan-examples # Plan all examples"
+      - echo "  task test-all - Complete test suite"
+      - echo "  task validate-examples - Validate all examples"
+      - echo "  task plan-examples - Plan all examples"
       - echo ""
       - echo "Individual example commands:"
-      - echo "  task apply-simple-cluster # Deploy simple cluster"
-      - echo "  task destroy-simple-cluster # Destroy simple cluster"
+      - echo "  task apply-fargate - Deploy fargate cluster"
+      - echo "  task apply-flux-cd - Deploy flux-cd cluster"
+      - echo "  task apply-on-demand - Deploy on-demand cluster"
+      - echo "  task apply-spot - Deploy spot cluster"
+      - echo "  task destroy-fargate - Destroy fargate cluster"
+      - echo "  task destroy-flux-cd - Destroy flux-cd cluster"
+      - echo "  task destroy-on-demand - Destroy on-demand cluster"
+      - echo "  task destroy-spot - Destroy spot cluster"
       - echo ""
       - echo "Maintenance:"
-      - echo "  task clean # Clean all state files"
-      - echo "  task init-all # Initialize all modules"
-      - echo "  task format # Format all Terraform files"
+      - echo "  task clean - Clean all state files"
+      - echo "  task init-all - Initialize all modules"
+      - echo "  task format - Format all Terraform files"
       - echo ""
       - echo "Advanced:"
-      - echo "  task security-scan # Security analysis"
-      - echo "  task cost-estimate # Cost estimation"
-      - echo "  task docs-preview # Generate documentation"
-      - echo ""
-      - 'echo "For all available tasks run: task --list"'
+      - echo "  task security-scan - Security analysis"
+      - echo "  task cost-estimate - Cost estimation"
+      - echo "  task docs-preview - Generate documentation"
