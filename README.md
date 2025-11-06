@@ -92,6 +92,7 @@ The output will provide complete step-by-step instructions for:
 - **🔐 IRSA Support** - IAM Roles for Service Accounts enabled by default
 - **🛡️ Security Groups** - Pre-configured with best practices
 - **📦 EBS CSI Driver** - Auto-configured with proper IAM permissions
+- **🆔 Pod Identity Agent** - Amazon EKS Pod Identity add-on deployed automatically
 - **🌐 VPC CNI Enhancement** - Dedicated IRSA role for network security
 - **📊 Add-on Management** - Automatic version management with conflict resolution
 - **🔧 Flexible Configuration** - Three approaches for VPC/subnet selection
@@ -185,6 +186,7 @@ module "eks" {
 - **🔐 IRSA Support** - IAM Roles for Service Accounts enabled by default
 - **🛡️ Security Groups** - Pre-configured with best practices
 - **📦 EBS CSI Driver** - Auto-configured with proper IAM permissions
+- **🆔 Pod Identity Agent** - Amazon EKS Pod Identity add-on deployed automatically
 - **🌐 VPC CNI Enhancement** - Dedicated IRSA role for network security
 - **📊 Add-on Management** - Automatic version management
 - **🔧 Flexible Configuration** - Three approaches for VPC/subnet selection

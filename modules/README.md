@@ -18,7 +18,7 @@ modules/eks/
 
 - **EKS Cluster** with configurable Kubernetes version
 - **Managed Node Groups** with auto-scaling
-- **Essential Add-ons**: VPC CNI, CoreDNS, kube-proxy, EBS CSI driver
+- **Essential Add-ons**: VPC CNI, CoreDNS, kube-proxy, EBS CSI driver, Pod Identity agent
 - **IRSA Support** for secure pod-to-AWS communication
 - **Smart VPC/Subnet Discovery** with multiple methods
 - **Security Groups** with best practices
