@@ -70,6 +70,13 @@ data "aws_eks_addon_version" "ebs_csi_driver" {
   most_recent        = true
 }
 
+data "aws_eks_addon_version" "pod_identity_agent" {
+  count              = var.enable_addon_version_management && var.enable_pod_identity_addon ? 1 : 0
+  addon_name         = "amazon-eks-pod-identity-agent"
+  kubernetes_version = var.cluster_version
+  most_recent        = true
+}
+
 # VPC data source - discover VPC by name or tags
 data "aws_vpc" "selected" {
   count = var.vpc_id == null ? 1 : 0
