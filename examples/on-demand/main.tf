@@ -14,14 +14,21 @@ module "eks" {
   subnet_tags = var.subnet_tags
   subnet_ids  = var.subnet_ids
 
-  # Node Group Configuration - On-Demand instances
-  node_group_instance_types = var.node_group_instance_types
-  node_group_desired_size   = var.node_group_desired_size
-  node_group_max_size       = var.node_group_max_size
-  node_group_min_size       = var.node_group_min_size
-  node_group_capacity_type  = "ON_DEMAND"
-  node_group_ami_type       = "AL2023_x86_64_STANDARD"
-  node_group_disk_size      = 20
+  # Node Groups Configuration - Using the proper node_groups variable
+  node_groups = {
+    main = {
+      instance_types = ["t3.medium", "t3a.medium"]
+      desired_size   = 2
+      max_size       = 4
+      min_size       = 1
+      capacity_type  = "ON_DEMAND"
+      labels         = {}
+      taints         = []
+      tags           = {}
+    }
+  }
+  node_group_ami_type  = "AL2023_x86_64_STANDARD"
+  node_group_disk_size = 20
 
   # Security Configuration
   endpoint_private_access = true
