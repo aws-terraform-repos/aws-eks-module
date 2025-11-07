@@ -174,11 +174,7 @@ variable "enable_addon_version_management" {
   default     = true
 }
 
-variable "enable_pod_identity_addon" {
-  description = "Deploy the Amazon EKS Pod Identity Agent add-on"
-  type        = bool
-  default     = true
-}
+
 
 variable "external_dns_zone_ids" {
   description = "List of Route53 hosted zone IDs ExternalDNS can manage; if empty, permissions apply to all zones (less secure)"

@@ -70,11 +70,7 @@ data "aws_eks_addon_version" "ebs_csi_driver" {
   most_recent        = true
 }
 
-# Pod identity agent is not available in all regions/versions
-# We'll handle this at the resource level
-locals {
-  pod_identity_enabled = var.enable_pod_identity_addon
-}
+
 
 # VPC data source - discover VPC by name or tags
 data "aws_vpc" "selected" {

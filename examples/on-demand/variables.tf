@@ -130,12 +130,7 @@ variable "external_dns_log_level" {
   default     = "info"
 }
 
-# Pod Identity Configuration
-variable "enable_pod_identity_addon" {
-  description = "Whether to enable the EKS Pod Identity Agent"
-  type        = bool
-  default     = true
-}
+
 
 # Helm Deployment Variables
 variable "enable_helm_deployments" {

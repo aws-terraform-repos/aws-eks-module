@@ -280,20 +280,4 @@ resource "aws_eks_addon" "ebs_csi_driver" {
   }
 }
 
-resource "aws_eks_addon" "pod_identity_agent" {
-  count                       = local.pod_identity_enabled ? 1 : 0
-  cluster_name                = aws_eks_cluster.this.name
-  addon_name                  = "amazon-eks-pod-identity-agent"
-  resolve_conflicts_on_create = "OVERWRITE"
-  resolve_conflicts_on_update = "OVERWRITE"
 
-  depends_on = [aws_eks_node_group.this, aws_eks_fargate_profile.this]
-
-  tags = var.tags
-
-  lifecycle {
-    ignore_changes = [
-      addon_version
-    ]
-  }
-}
