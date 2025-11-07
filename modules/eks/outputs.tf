@@ -43,6 +43,11 @@ output "cluster_primary_security_group_id" {
   value       = aws_eks_cluster.this.vpc_config[0].cluster_security_group_id
 }
 
+output "load_balancer_security_group_id" {
+  description = "ID of the Load Balancer security group"
+  value       = aws_security_group.load_balancer.id
+}
+
 output "cluster_version" {
   description = "The Kubernetes version for the cluster"
   value       = aws_eks_cluster.this.version

@@ -24,6 +24,48 @@ resource "aws_security_group" "cluster" {
   })
 }
 
+# Security group for AWS Load Balancer Controller
+resource "aws_security_group" "load_balancer" {
+  name        = "${var.cluster_name}-lb-sg"
+  description = "Security group for AWS Load Balancer Controller"
+  vpc_id      = local.vpc_id
+
+  # Allow inbound HTTPS traffic (for ALB)
+  ingress {
+    description      = "HTTPS inbound"
+    from_port        = 443
+    to_port          = 443
+    protocol         = "tcp"
+    cidr_blocks      = ["0.0.0.0/0"]
+    ipv6_cidr_blocks = ["::/0"]
+  }
+
+  # Allow inbound HTTP traffic (for ALB)
+  ingress {
+    description      = "HTTP inbound"
+    from_port        = 80
+    to_port          = 80
+    protocol         = "tcp"
+    cidr_blocks      = ["0.0.0.0/0"]
+    ipv6_cidr_blocks = ["::/0"]
+  }
+
+  # Allow all outbound traffic (will be restricted by node security group rules)
+  egress {
+    description      = "All outbound traffic"
+    from_port        = 0
+    to_port          = 0
+    protocol         = "-1"
+    cidr_blocks      = ["0.0.0.0/0"]
+    ipv6_cidr_blocks = ["::/0"]
+  }
+
+  tags = merge(var.tags, {
+    Name                                        = "${var.cluster_name}-lb-sg"
+    "kubernetes.io/cluster/${var.cluster_name}" = "owned"
+  })
+}
+
 # Security group for EKS nodes
 resource "aws_security_group" "node_group" {
   name        = "${var.cluster_name}-node-sg"
@@ -38,8 +80,9 @@ resource "aws_security_group" "node_group" {
     self        = true
   }
 
+  # Allow inbound traffic from control plane
   ingress {
-    description     = "Allow pods to communicate with the cluster API Server"
+    description     = "Allow HTTPS from control plane"
     from_port       = 443
     to_port         = 443
     protocol        = "tcp"
@@ -47,11 +90,36 @@ resource "aws_security_group" "node_group" {
   }
 
   ingress {
-    description     = "Allow kubelets and pods to receive communication from the cluster control plane"
+    description     = "Allow kubelet and pod communication from control plane"
     from_port       = 1025
     to_port         = 65535
     protocol        = "tcp"
     security_groups = [aws_security_group.cluster.id]
+  }
+
+  # Allow inbound traffic from Load Balancer
+  ingress {
+    description     = "Allow HTTP from Load Balancer"
+    from_port       = 80
+    to_port         = 80
+    protocol        = "tcp"
+    security_groups = [aws_security_group.load_balancer.id]
+  }
+
+  ingress {
+    description     = "Allow HTTPS from Load Balancer"
+    from_port       = 443
+    to_port         = 443
+    protocol        = "tcp"
+    security_groups = [aws_security_group.load_balancer.id]
+  }
+
+  ingress {
+    description     = "Allow health checks from Load Balancer"
+    from_port       = 1025
+    to_port         = 65535
+    protocol        = "tcp"
+    security_groups = [aws_security_group.load_balancer.id]
   }
 
   # Allow SSH access (optional, only if needed for debugging)
@@ -66,16 +134,19 @@ resource "aws_security_group" "node_group" {
     }
   }
 
+  # Allow all outbound traffic
   egress {
-    description = "All outbound traffic"
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
+    description      = "All outbound traffic"
+    from_port        = 0
+    to_port          = 0
+    protocol         = "-1"
+    cidr_blocks      = ["0.0.0.0/0"]
+    ipv6_cidr_blocks = ["::/0"]
   }
 
   tags = merge(var.tags, {
-    Name = "${var.cluster_name}-node-sg"
+    Name                                        = "${var.cluster_name}-node-sg"
+    "kubernetes.io/cluster/${var.cluster_name}" = "owned"
   })
 }
 

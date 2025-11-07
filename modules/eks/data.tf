@@ -41,7 +41,7 @@ data "aws_iam_policy_document" "node_assume_role_policy" {
   }
 }
 
-# EKS Add-on versions
+# EKS Add-on versions with specific version constraints for 1.33 compatibility
 data "aws_eks_addon_version" "vpc_cni" {
   count              = var.enable_addon_version_management ? 1 : 0
   addon_name         = "vpc-cni"
