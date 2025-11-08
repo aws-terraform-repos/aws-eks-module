@@ -375,3 +375,41 @@ variable "flux_cd_notification_providers" {
   type        = list(string)
   default     = []
 }
+
+# Cluster Autoscaler Configuration
+variable "enable_cluster_autoscaler" {
+  description = "Whether to enable Cluster Autoscaler"
+  type        = bool
+  default     = true
+}
+
+variable "cluster_autoscaler_chart_version" {
+  description = "Helm chart version for Cluster Autoscaler"
+  type        = string
+  default     = null
+}
+
+variable "cluster_autoscaler_values" {
+  description = "Additional values for the Cluster Autoscaler Helm chart"
+  type        = map(any)
+  default     = {}
+}
+
+# Metrics Server Configuration
+variable "enable_metrics_server" {
+  description = "Whether to enable Metrics Server"
+  type        = bool
+  default     = true
+}
+
+variable "metrics_server_chart_version" {
+  description = "Helm chart version for Metrics Server"
+  type        = string
+  default     = null
+}
+
+variable "metrics_server_values" {
+  description = "Additional values for the Metrics Server Helm chart"
+  type        = map(any)
+  default     = {}
+}

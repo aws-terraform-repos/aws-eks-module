@@ -350,3 +350,105 @@ resource "kubernetes_manifest" "flux_kustomization" {
     }
   }
 }
+
+# Cluster Autoscaler Helm Release
+resource "helm_release" "cluster_autoscaler" {
+  count = var.enable_helm_deployments && var.enable_cluster_autoscaler ? 1 : 0
+
+  depends_on = [
+    time_sleep.wait_for_cluster,
+    data.aws_eks_cluster.cluster_status,
+    aws_iam_role.cluster_autoscaler,
+    aws_eks_node_group.this,
+    aws_eks_addon.vpc_cni,
+    aws_eks_addon.kube_proxy,
+    aws_eks_addon.coredns
+  ]
+
+  name       = "cluster-autoscaler"
+  repository = "https://kubernetes.github.io/autoscaler"
+  chart      = "cluster-autoscaler"
+  namespace  = "kube-system"
+  version    = var.cluster_autoscaler_chart_version
+  timeout    = var.helm_timeout
+  wait       = var.wait_for_ready
+
+  values = [
+    yamlencode(merge({
+      autoDiscovery = {
+        clusterName = aws_eks_cluster.this.name
+      }
+      awsRegion     = data.aws_region.current.name
+      cloudProvider = "aws"
+      rbac = {
+        create = true
+        serviceAccount = {
+          annotations = {
+            "eks.amazonaws.com/role-arn" = var.enable_irsa ? aws_iam_role.cluster_autoscaler[0].arn : ""
+          }
+          create = true
+          name   = "cluster-autoscaler"
+        }
+      }
+      resources = {
+        limits = {
+          cpu    = "200m"
+          memory = "512Mi"
+        }
+        requests = {
+          cpu    = "100m"
+          memory = "256Mi"
+        }
+      }
+      extraArgs = {
+        "scale-down-delay-after-add"  = "2m"
+        "scale-down-unneeded-time"    = "2m"
+        "scan-interval"               = "30s"
+        "skip-nodes-with-system-pods" = "false"
+        "balance-similar-node-groups" = "true"
+        "expander"                    = "least-waste"
+      }
+    }, var.cluster_autoscaler_values))
+  ]
+}
+
+# Metrics Server Helm Release
+resource "helm_release" "metrics_server" {
+  count = var.enable_helm_deployments && var.enable_metrics_server ? 1 : 0
+
+  depends_on = [
+    time_sleep.wait_for_cluster,
+    data.aws_eks_cluster.cluster_status,
+    aws_eks_node_group.this,
+    aws_eks_addon.vpc_cni,
+    aws_eks_addon.kube_proxy,
+    aws_eks_addon.coredns
+  ]
+
+  name       = "metrics-server"
+  repository = "https://kubernetes-sigs.github.io/metrics-server/"
+  chart      = "metrics-server"
+  namespace  = "kube-system"
+  version    = var.metrics_server_chart_version
+  timeout    = var.helm_timeout
+  wait       = var.wait_for_ready
+
+  values = [
+    yamlencode(merge({
+      resources = {
+        limits = {
+          cpu    = "100m"
+          memory = "200Mi"
+        }
+        requests = {
+          cpu    = "50m"
+          memory = "100Mi"
+        }
+      }
+      args = [
+        "--kubelet-insecure-tls",
+        "--kubelet-preferred-address-types=InternalIP"
+      ]
+    }, var.metrics_server_values))
+  ]
+}
