@@ -190,49 +190,29 @@ resource "aws_eks_cluster" "this" {
 
 # EKS Node Groups (dynamic for multiple node groups)
 resource "aws_eks_node_group" "this" {
-  for_each = var.node_groups
-
   cluster_name    = aws_eks_cluster.this.name
-  node_group_name = "${var.cluster_name}-${each.key}-node-group"
+  node_group_name = "${var.cluster_name}-primary-node-group"
   node_role_arn   = aws_iam_role.node_group.arn
   subnet_ids      = local.subnet_ids
 
   scaling_config {
-    desired_size = each.value.desired_size
-    max_size     = each.value.max_size
-    min_size     = each.value.min_size
+    desired_size = var.node_group_desired_size
+    max_size     = var.node_group_max_size
+    min_size     = var.node_group_min_size
   }
 
   update_config {
     max_unavailable = 1
   }
 
-  dynamic "remote_access" {
-    for_each = var.enable_ssh_access ? [1] : []
-    content {
-      ec2_ssh_key               = var.ssh_key_name
-      source_security_group_ids = [aws_security_group.node_group.id]
-    }
-  }
-
   ami_type       = var.node_group_ami_type
-  capacity_type  = each.value.capacity_type
+  capacity_type  = "ON_DEMAND"
   disk_size      = var.node_group_disk_size
-  instance_types = each.value.instance_types
+  instance_types = var.node_group_instance_types
 
-  labels = each.value.labels
-
-  dynamic "taint" {
-    for_each = each.value.taints
-    content {
-      key    = taint.value.key
-      value  = taint.value.value
-      effect = taint.value.effect
-    }
-  }
-
-  tags = merge(var.tags, each.value.tags, {
-    Name = "${var.cluster_name}-${each.key}-node-group"
+  tags = merge(var.tags, {
+    Name                                        = "${var.cluster_name}-primary-node-group"
+    "kubernetes.io/cluster/${var.cluster_name}" = "owned"
   })
 
   # Ensure that IAM Role permissions are created before and deleted after EKS Node Group handling.

@@ -68,6 +68,18 @@ variable "node_group_min_size" {
   default     = 1
 }
 
+variable "node_group_ami_type" {
+  description = "Type of Amazon Machine Image (AMI) associated with the EKS Node Group"
+  type        = string
+  default     = "AL2023_x86_64_STANDARD"
+}
+
+variable "node_group_disk_size" {
+  description = "Disk size in GiB for nodes"
+  type        = number
+  default     = 20
+}
+
 variable "public_access_cidrs" {
   description = "List of CIDR blocks that can access the public API server endpoint"
   type        = list(string)
