@@ -679,6 +679,71 @@ resource "aws_iam_role_policy_attachment" "ebs_csi_driver_policy" {
   role       = aws_iam_role.ebs_csi_driver[0].name
 }
 
+# Fluent Bit IAM Policy
+resource "aws_iam_policy" "fluent_bit" {
+  count       = var.enable_irsa && var.enable_fluent_bit ? 1 : 0
+  name        = "${var.cluster_name}-FluentBitPolicy"
+  description = "Policy for Fluent Bit to send logs to CloudWatch"
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "cloudwatch:PutMetricData",
+          "logs:CreateLogStream",
+          "logs:CreateLogGroup",
+          "logs:PutLogEvents",
+          "logs:DescribeLogStreams",
+          "logs:DescribeLogGroups",
+          "logs:PutRetentionPolicy"
+        ]
+        Resource = "*"
+      }
+    ]
+  })
+
+  tags = merge(var.tags, {
+    Name = "${var.cluster_name}-fluent-bit-policy"
+  })
+}
+
+# Fluent Bit IRSA Role
+resource "aws_iam_role" "fluent_bit" {
+  count = var.enable_irsa && var.enable_fluent_bit ? 1 : 0
+  name  = "${var.cluster_name}-fluent-bit-role"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Action = "sts:AssumeRoleWithWebIdentity"
+        Effect = "Allow"
+        Principal = {
+          Federated = aws_iam_openid_connect_provider.eks[0].arn
+        }
+        Condition = {
+          StringEquals = {
+            "${replace(aws_iam_openid_connect_provider.eks[0].url, "https://", "")}:sub" = "system:serviceaccount:kube-system:fluent-bit"
+            "${replace(aws_iam_openid_connect_provider.eks[0].url, "https://", "")}:aud" = "sts.amazonaws.com"
+          }
+        }
+      }
+    ]
+  })
+
+  tags = merge(var.tags, {
+    Name = "${var.cluster_name}-fluent-bit-role"
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "fluent_bit_policy" {
+  count      = var.enable_irsa && var.enable_fluent_bit ? 1 : 0
+  policy_arn = aws_iam_policy.fluent_bit[0].arn
+  role       = aws_iam_role.fluent_bit[0].name
+}
+
 # OIDC Provider for EKS
 resource "aws_iam_openid_connect_provider" "eks" {
   count = var.enable_irsa ? 1 : 0

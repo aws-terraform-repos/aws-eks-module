@@ -261,6 +261,31 @@ variable "external_dns_chart_version" {
   default     = null
 }
 
+# Fluent Bit Configuration
+variable "enable_fluent_bit" {
+  description = "Whether to enable Fluent Bit for log collection"
+  type        = bool
+  default     = true
+}
+
+variable "fluent_bit_chart_version" {
+  description = "Helm chart version for Fluent Bit"
+  type        = string
+  default     = null
+}
+
+variable "fluent_bit_log_group_name" {
+  description = "CloudWatch Log Group name for Fluent Bit logs"
+  type        = string
+  default     = null
+}
+
+variable "fluent_bit_log_retention_days" {
+  description = "Number of days to retain Fluent Bit logs in CloudWatch"
+  type        = number
+  default     = 30
+}
+
 # Enhanced ExternalDNS configuration
 variable "external_dns_source" {
   description = "ExternalDNS source types (ingress, service, etc.)"

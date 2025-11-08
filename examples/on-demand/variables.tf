@@ -111,6 +111,25 @@ variable "subdomain_zones" {
   default     = []
 }
 
+# Fluent Bit Variables
+variable "enable_fluent_bit" {
+  description = "Whether to enable Fluent Bit for log collection"
+  type        = bool
+  default     = true
+}
+
+variable "fluent_bit_log_group_name" {
+  description = "CloudWatch Log Group name for Fluent Bit logs"
+  type        = string
+  default     = null
+}
+
+variable "fluent_bit_log_retention_days" {
+  description = "Number of days to retain Fluent Bit logs in CloudWatch"
+  type        = number
+  default     = 30
+}
+
 # Load Balancer and DNS Variables
 variable "enable_load_balancer_controller" {
   description = "Whether to enable AWS Load Balancer Controller"

@@ -18,7 +18,7 @@ module "eks" {
   node_groups = {
     main = {
       instance_types = ["t3.medium", "t3a.medium"]
-      desired_size   = 2
+      desired_size   = 3
       max_size       = 4
       min_size       = 1
       capacity_type  = "ON_DEMAND"
@@ -55,6 +55,11 @@ module "eks" {
   enable_helm_deployments = var.enable_helm_deployments
   helm_timeout            = var.helm_timeout
   wait_for_ready          = var.wait_for_ready
+
+  # Fluent Bit Configuration
+  enable_fluent_bit             = true
+  fluent_bit_log_group_name     = "/aws/eks/${var.cluster_name}/applications"
+  fluent_bit_log_retention_days = 30
 
   tags = var.tags
 }
