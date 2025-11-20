@@ -14,13 +14,21 @@ permissions:
 
 jobs:
   terraform:
-    name: "Terraform"
+    name: "Terraform (${{ matrix.workdir }})"
     runs-on: ubuntu-latest
     environment: production
+
+    strategy:
+      fail-fast: false
+      matrix:
+        workdir:
+          - examples/on-demand
+          - examples/argo-cd
 
     defaults:
       run:
         shell: bash
+        working-directory: ${{ matrix.workdir }}
 
     steps:
       - name: Checkout
