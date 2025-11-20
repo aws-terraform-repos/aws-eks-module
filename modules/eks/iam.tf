@@ -771,3 +771,68 @@ resource "aws_iam_role_policy_attachment" "flux_cd_policy" {
   policy_arn = aws_iam_policy.flux_cd[0].arn
   role       = aws_iam_role.flux_cd[0].name
 }
+
+# Cluster Autoscaler IAM Policy
+resource "aws_iam_policy" "cluster_autoscaler" {
+  name        = "${var.cluster_name}-ClusterAutoscalerPolicy"
+  description = "Policy for Cluster Autoscaler"
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "autoscaling:DescribeAutoScalingGroups",
+          "autoscaling:DescribeAutoScalingInstances",
+          "autoscaling:DescribeLaunchConfigurations",
+          "autoscaling:DescribeTags",
+          "autoscaling:SetDesiredCapacity",
+          "autoscaling:TerminateInstanceInAutoScalingGroup",
+          "ec2:DescribeLaunchTemplateVersions",
+          "ec2:DescribeInstanceTypes"
+        ]
+        Resource = "*"
+      }
+    ]
+  })
+
+  tags = merge(var.tags, {
+    Name = "${var.cluster_name}-cluster-autoscaler-policy"
+  })
+}
+
+# Cluster Autoscaler IAM Role
+resource "aws_iam_role" "cluster_autoscaler" {
+  count = var.enable_irsa ? 1 : 0
+  name  = "${var.cluster_name}-cluster-autoscaler-role"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Action = "sts:AssumeRoleWithWebIdentity"
+        Effect = "Allow"
+        Principal = {
+          Federated = aws_iam_openid_connect_provider.eks[0].arn
+        }
+        Condition = {
+          StringEquals = {
+            "${replace(aws_iam_openid_connect_provider.eks[0].url, "https://", "")}:sub" = "system:serviceaccount:kube-system:cluster-autoscaler"
+            "${replace(aws_iam_openid_connect_provider.eks[0].url, "https://", "")}:aud" = "sts.amazonaws.com"
+          }
+        }
+      }
+    ]
+  })
+
+  tags = merge(var.tags, {
+    Name = "${var.cluster_name}-cluster-autoscaler-role"
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "cluster_autoscaler" {
+  count      = var.enable_irsa ? 1 : 0
+  policy_arn = aws_iam_policy.cluster_autoscaler.arn
+  role       = aws_iam_role.cluster_autoscaler[0].name
+}

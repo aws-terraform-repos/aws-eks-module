@@ -87,7 +87,7 @@ The output will provide complete step-by-step instructions for:
 - **🌍 Route53 Integration** - Automatic hosted zone creation and management
 - **🔄 ExternalDNS** - Automatic DNS record management for ingresses and services
 - **⚖️ Load Balancer Controller** - AWS ALB/NLB integration with Helm deployment
-- **� Flux CD GitOps** - Continuous delivery with automated Git repository sync and image updates
+- **Flux CD & Argo CD GitOps** - Continuous delivery with automated Git repository sync and image updates
 - **�🔍 Smart VPC/Subnet Discovery** - Multiple discovery methods (name, tags, explicit IDs)
 - **🔐 IRSA Support** - IAM Roles for Service Accounts enabled by default
 - **🛡️ Security Groups** - Pre-configured with best practices
@@ -101,8 +101,8 @@ The output will provide complete step-by-step instructions for:
 
 1. **Deploy Infrastructure** → Creates EKS cluster + Route53 hosted zones + IAM roles
 2. **Update Domain Registrar** → Point your domain to the provided name servers  
-3. **Install Helm Charts** → ExternalDNS + AWS Load Balancer Controller + Flux CD
-4. **Configure GitOps** → Flux CD monitors your Git repository for changes
+3. **Install Helm Charts** → ExternalDNS + AWS Load Balancer Controller + Flux CD or Argo CD
+4. **Configure GitOps** → Flux CD or Argo CD monitors your Git repository for changes
 5. **Deploy Applications** → Ingress resources automatically get DNS records
 6. **Automatic Management** → DNS records and deployments managed automatically
 
@@ -114,6 +114,40 @@ The output will provide complete step-by-step instructions for:
 4. **Image Automation** → New container images trigger automatic updates
 5. **DNS Updates** → ExternalDNS creates DNS records for new services
 6. **Monitoring** → Flux CD provides deployment status and notifications
+
+## 🚀 GitOps with Argo CD
+
+Enable Argo CD when you want a GitOps controller that uses Application CRDs and a built-in UI:
+
+```hcl
+module "eks" {
+  source = "./modules/eks"
+
+  # core config omitted for brevity
+  enable_helm_deployments = true
+  enable_argo_cd          = true
+
+  # Optional: pin chart version and expose the server via LoadBalancer (default)
+  argo_cd_chart_version = "6.9.2"
+  argo_cd_values = {
+    server = {
+      service = {
+        type = "LoadBalancer"
+        annotations = {
+          "service.beta.kubernetes.io/aws-load-balancer-type" = "nlb"
+        }
+      }
+    }
+  }
+}
+```
+
+The outputs `helm_argo_cd_status` and `argo_cd_namespace` help confirm the release state after `terraform apply`.
+
+To fetch the initial Argo CD admin password:
+```bash
+kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d; echo
+```
 
 ## 📋 Root Configuration Example
 
@@ -374,6 +408,7 @@ kubectl describe serviceaccount ebs-csi-controller-sa -n kube-system
 See the `examples/` directory for complete working examples:
 
 - **[Flux CD GitOps](./examples/flux-cd/)**: Complete GitOps setup with Flux CD for continuous deployment
+- **[Argo CD GitOps](./examples/argo-cd/)**: On-demand EKS example with Argo CD installed via Helm
 - **[Fargate](./examples/fargate/)**: Serverless containers with AWS Fargate
 - **[On-Demand](./examples/on-demand/)**: Traditional on-demand EC2 instances  
 - **[Spot](./examples/spot/)**: Cost-optimized with EC2 Spot instances

@@ -375,3 +375,71 @@ variable "flux_cd_notification_providers" {
   type        = list(string)
   default     = []
 }
+
+variable "enable_argo_cd" {
+  description = "Whether to enable Argo CD deployment"
+  type        = bool
+  default     = false
+}
+
+variable "argo_cd_chart_version" {
+  description = "Helm chart version for Argo CD"
+  type        = string
+  default     = null
+}
+
+variable "argo_cd_namespace" {
+  description = "Kubernetes namespace for Argo CD"
+  type        = string
+  default     = "argocd"
+}
+
+variable "argo_cd_release_name" {
+  description = "Helm release name for Argo CD"
+  type        = string
+  default     = "argo-cd"
+}
+
+variable "argo_cd_values" {
+  description = "Additional values for the Argo CD Helm chart"
+  type        = map(any)
+  default     = {}
+}
+
+# Cluster Autoscaler Configuration
+variable "enable_cluster_autoscaler" {
+  description = "Whether to enable Cluster Autoscaler"
+  type        = bool
+  default     = true
+}
+
+variable "cluster_autoscaler_chart_version" {
+  description = "Helm chart version for Cluster Autoscaler"
+  type        = string
+  default     = null
+}
+
+variable "cluster_autoscaler_values" {
+  description = "Additional values for the Cluster Autoscaler Helm chart"
+  type        = map(any)
+  default     = {}
+}
+
+# Metrics Server Configuration
+variable "enable_metrics_server" {
+  description = "Whether to enable Metrics Server"
+  type        = bool
+  default     = true
+}
+
+variable "metrics_server_chart_version" {
+  description = "Helm chart version for Metrics Server"
+  type        = string
+  default     = null
+}
+
+variable "metrics_server_values" {
+  description = "Additional values for the Metrics Server Helm chart"
+  type        = map(any)
+  default     = {}
+}

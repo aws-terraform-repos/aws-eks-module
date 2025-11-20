@@ -171,6 +171,27 @@ output "helm_flux_cd_status" {
   value       = var.enable_helm_deployments && var.enable_flux_cd ? helm_release.flux_cd[0].status : "not_deployed"
 }
 
+output "argo_cd_namespace" {
+  description = "Kubernetes namespace where Argo CD is installed"
+  value       = var.enable_argo_cd ? var.argo_cd_namespace : null
+}
+
+output "helm_argo_cd_status" {
+  description = "Status of the Argo CD Helm release"
+  value       = var.enable_helm_deployments && var.enable_argo_cd ? helm_release.argo_cd[0].status : "not_deployed"
+}
+
+output "argo_cd_admin_password_command" {
+  description = "Command to retrieve the Argo CD initial admin password"
+  value       = var.enable_helm_deployments && var.enable_argo_cd ? "kubectl -n ${var.argo_cd_namespace} get secret argocd-initial-admin-secret -o jsonpath=\"{.data.password}\" | base64 -d; echo" : null
+}
+
+output "argo_cd_initial_admin_password" {
+  description = "Initial Argo CD admin password in base64 (use the command output to decode)"
+  value       = var.enable_helm_deployments && var.enable_argo_cd ? data.kubernetes_secret.argo_cd_initial_admin[0].data["password"] : null
+  sensitive   = true
+}
+
 # Fargate Profiles outputs
 output "fargate_profiles" {
   description = "Map of Fargate profile attributes"
