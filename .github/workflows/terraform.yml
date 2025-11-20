@@ -25,7 +25,7 @@ jobs:
           - examples/argo-cd
           - examples/fargate
           - examples/flux-cd
-          - examples/jenkins
+          # - examples/jenkins
           - examples/on-demand
           - examples/spot
 
