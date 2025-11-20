@@ -351,6 +351,95 @@ resource "kubernetes_manifest" "flux_kustomization" {
   }
 }
 
+# Argo CD Namespace
+resource "kubernetes_namespace" "argo_cd" {
+  count = var.enable_helm_deployments && var.enable_argo_cd ? 1 : 0
+
+  depends_on = [
+    time_sleep.wait_for_cluster,
+    data.aws_eks_cluster.cluster_status,
+    aws_eks_node_group.this,
+    aws_eks_addon.vpc_cni,
+    aws_eks_addon.kube_proxy,
+    aws_eks_addon.coredns
+  ]
+
+  metadata {
+    name = var.argo_cd_namespace
+    labels = {
+      "app.kubernetes.io/name"     = "argocd"
+      "app.kubernetes.io/instance" = "argocd"
+    }
+  }
+}
+
+# Argo CD Helm Release
+resource "helm_release" "argo_cd" {
+  count = var.enable_helm_deployments && var.enable_argo_cd ? 1 : 0
+
+  depends_on = [
+    kubernetes_namespace.argo_cd,
+    time_sleep.wait_for_cluster,
+    data.aws_eks_cluster.cluster_status,
+    aws_eks_node_group.this,
+    aws_eks_addon.vpc_cni,
+    aws_eks_addon.kube_proxy,
+    aws_eks_addon.coredns,
+    # Wait for ALB controller webhook; if disabled count=0 this is a no-op
+    helm_release.aws_load_balancer_controller
+  ]
+
+  name             = var.argo_cd_release_name
+  repository       = "https://argoproj.github.io/argo-helm"
+  chart            = "argo-cd"
+  namespace        = var.argo_cd_namespace
+  version          = var.argo_cd_chart_version
+  timeout          = var.helm_timeout
+  wait             = var.wait_for_ready
+  create_namespace = false
+  replace          = true          # allow re-use if a failed release remains
+  cleanup_on_fail  = true          # ensure failed installs are cleaned up
+
+  values = [
+    yamlencode(merge({
+      crds = {
+        install = true
+      }
+      server = {
+        service = {
+          type = "LoadBalancer"
+          annotations = {
+            "service.beta.kubernetes.io/aws-load-balancer-type"            = "nlb"
+            "service.beta.kubernetes.io/aws-load-balancer-scheme"          = "internet-facing"
+            "service.beta.kubernetes.io/aws-load-balancer-nlb-target-type" = "instance"
+          }
+        }
+      }
+    }, var.argo_cd_values))
+  ]
+}
+
+resource "null_resource" "argo_cd_initial_password" {
+  count = var.enable_helm_deployments && var.enable_argo_cd ? 1 : 0
+
+  depends_on = [helm_release.argo_cd]
+
+  provisioner "local-exec" {
+    command = "kubectl -n ${var.argo_cd_namespace} get secret argocd-initial-admin-secret -o jsonpath='{.data.password}' | base64 -d; echo"
+  }
+}
+
+data "kubernetes_secret" "argo_cd_initial_admin" {
+  count = var.enable_helm_deployments && var.enable_argo_cd ? 1 : 0
+
+  depends_on = [helm_release.argo_cd]
+
+  metadata {
+    name      = "argocd-initial-admin-secret"
+    namespace = var.argo_cd_namespace
+  }
+}
+
 # Cluster Autoscaler Helm Release
 resource "helm_release" "cluster_autoscaler" {
   count = var.enable_helm_deployments && var.enable_cluster_autoscaler ? 1 : 0

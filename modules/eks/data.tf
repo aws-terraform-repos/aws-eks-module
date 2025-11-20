@@ -7,6 +7,11 @@ data "aws_partition" "current" {}
 # Note: EKS managed node groups will automatically use the appropriate AMI for the cluster version
 # The EKS service handles AMI selection, so we don't need to specify AMI details manually
 
+# Available AZs in the current region (used to exclude unsupported zones like us-east-1e)
+data "aws_availability_zones" "available" {
+  state = "available"
+}
+
 # TLS certificate for OIDC
 data "tls_certificate" "eks" {
   url = aws_eks_cluster.this.identity[0].oidc[0].issuer
@@ -161,20 +166,15 @@ data "aws_subnet" "private_subnets" {
   id       = each.value
 }
 
-# EKS supported availability zones (excluding us-east-1e)
-locals {
-  eks_supported_azs = [
-    "us-east-1a",
-    "us-east-1b",
-    "us-east-1c",
-    "us-east-1d",
-    "us-east-1f"
-  ]
-}
-
 # Local values to handle both explicit and discovered resources
 locals {
   vpc_id = var.vpc_id != null ? var.vpc_id : data.aws_vpc.selected[0].id
+
+  # Allowed AZs: use all available in region, but drop us-east-1e which is unsupported by EKS
+  available_azs = data.aws_availability_zones.available.names
+  allowed_azs   = data.aws_region.current.name == "us-east-1" ? [
+    for az in local.available_azs : az if az != "us-east-1e"
+  ] : local.available_azs
 
   # Filter subnets to only include those in EKS-supported AZs
   all_discovered_subnet_ids = var.subnet_ids != null ? var.subnet_ids : (
@@ -186,12 +186,12 @@ locals {
   # Only use subnets in EKS-supported availability zones
   subnet_ids = [
     for subnet_id in local.all_discovered_subnet_ids :
-    subnet_id if contains(local.eks_supported_azs, data.aws_subnet.selected_subnets[subnet_id].availability_zone)
+    subnet_id if contains(local.allowed_azs, data.aws_subnet.selected_subnets[subnet_id].availability_zone)
   ]
 
   # Private subnet IDs for Fargate profiles (Fargate requires private subnets only)
   private_subnet_ids = [
     for subnet_id in data.aws_subnets.private_subnets.ids :
-    subnet_id if contains(local.eks_supported_azs, data.aws_subnet.private_subnets[subnet_id].availability_zone)
+    subnet_id if contains(local.allowed_azs, data.aws_subnet.private_subnets[subnet_id].availability_zone)
   ]
 }
