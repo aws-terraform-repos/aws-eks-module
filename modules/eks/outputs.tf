@@ -151,6 +151,16 @@ output "helm_external_dns_status" {
   value       = var.enable_helm_deployments && var.enable_external_dns ? helm_release.external_dns[0].status : "not_deployed"
 }
 
+output "fluent_bit_role_arn" {
+  description = "ARN of the Fluent Bit IAM role"
+  value       = var.enable_irsa && var.enable_fluent_bit ? aws_iam_role.fluent_bit[0].arn : null
+}
+
+output "helm_fluent_bit_status" {
+  description = "Status of the Fluent Bit Helm release"
+  value       = var.enable_helm_deployments && var.enable_fluent_bit ? helm_release.fluent_bit[0].status : "not_deployed"
+}
+
 output "helm_deployments_enabled" {
   description = "Whether Helm deployments are enabled"
   value       = var.enable_helm_deployments

@@ -30,6 +30,37 @@ resource "time_sleep" "wait_for_cluster" {
   }
 }
 
+# Fluent Bit Helm Release
+resource "helm_release" "fluent_bit" {
+  count = var.enable_helm_deployments && var.enable_fluent_bit ? 1 : 0
+
+  depends_on = [
+    time_sleep.wait_for_cluster,
+    data.aws_eks_cluster.cluster_status,
+    aws_iam_role.fluent_bit,
+    aws_eks_node_group.this,
+    aws_eks_addon.vpc_cni,
+    aws_eks_addon.kube_proxy,
+    aws_eks_addon.coredns
+  ]
+
+  name       = "fluent-bit"
+  repository = "https://fluent.github.io/helm-charts"
+  chart      = "fluent-bit"
+  namespace  = "kube-system"
+  version    = var.fluent_bit_chart_version
+  timeout    = var.helm_timeout
+  wait       = var.wait_for_ready
+
+  values = [
+    templatefile("${path.module}/helm_values/fluent-bit-values.yaml", {
+      fluent_bit_role_arn = var.enable_irsa ? aws_iam_role.fluent_bit[0].arn : ""
+      aws_region          = data.aws_region.current.name
+      cluster_name        = aws_eks_cluster.this.name
+    })
+  ]
+}
+
 # AWS Load Balancer Controller Helm Release
 resource "helm_release" "aws_load_balancer_controller" {
   count = var.enable_helm_deployments && var.enable_load_balancer_controller ? 1 : 0
