@@ -1,5 +1,5 @@
 version: 3
 projects:
   - name: default
-    dir: examples/spot
+    dir: examples/argo-cd
     workflow: default
