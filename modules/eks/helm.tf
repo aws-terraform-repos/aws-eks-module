@@ -428,8 +428,8 @@ resource "helm_release" "argo_cd" {
   timeout          = var.helm_timeout
   wait             = var.wait_for_ready
   create_namespace = false
-  replace          = true          # allow re-use if a failed release remains
-  cleanup_on_fail  = true          # ensure failed installs are cleaned up
+  replace          = true # allow re-use if a failed release remains
+  cleanup_on_fail  = true # ensure failed installs are cleaned up
 
   values = [
     yamlencode(merge({

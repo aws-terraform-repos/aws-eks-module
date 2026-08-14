@@ -1,0 +1,49 @@
+name: Terraform CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  fmt:
+    name: tofu fmt check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: opentofu/setup-opentofu@v1
+        with:
+          tofu_version: "1.8.4"
+      - run: tofu fmt -check -recursive -diff
+
+  plan:
+    name: tofu plan (${{ matrix.dir }})
+    needs: fmt
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        dir:
+            - examples/spot
+    steps:
+      - uses: actions/checkout@v4
+      - uses: opentofu/setup-opentofu@v1
+        with:
+          tofu_version: "1.8.4"
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::465532803838:role/github-actions-terraform-plan-role
+          aws-region: us-east-1
+      - name: tofu init
+        working-directory: ${{ matrix.dir }}
+        run: tofu init -input=false
+      - name: tofu plan
+        working-directory: ${{ matrix.dir }}
+        run: tofu plan -input=false
