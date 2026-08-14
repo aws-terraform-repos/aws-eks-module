@@ -343,6 +343,7 @@ module "eks" {
 | flux_cd_git_repository_branch | Git repository branch for Flux CD to monitor | `string` | `"main"` | no |
 | flux_cd_image_automation | Whether to enable Flux CD image automation | `bool` | `false` | no |
 | tags | A map of tags to add to all resources | `map(string)` | `{}` | no |
+| environment | Deployment environment (e.g. dev, staging, production), merged into resource tags as Environment | `string` | `""` | no |
 
 ## Outputs
 
@@ -407,6 +408,8 @@ kubectl describe serviceaccount ebs-csi-controller-sa -n kube-system
 
 See the `examples/` directory for complete working examples:
 
+- **[Basic](./examples/basic/)**: Minimal cluster with a single on-demand node group, no add-ons
+- **[Advanced](./examples/advanced/)**: Mixed on-demand/spot node groups, IRSA, Load Balancer Controller, ExternalDNS, Fluent Bit
 - **[Flux CD GitOps](./examples/flux-cd/)**: Complete GitOps setup with Flux CD for continuous deployment
 - **[Argo CD GitOps](./examples/argo-cd/)**: On-demand EKS example with Argo CD installed via Helm
 - **[Fargate](./examples/fargate/)**: Serverless containers with AWS Fargate

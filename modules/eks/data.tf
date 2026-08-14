@@ -168,6 +168,11 @@ data "aws_subnet" "private_subnets" {
 
 # Local values to handle both explicit and discovered resources
 locals {
+  tags = merge(
+    var.tags,
+    var.environment != "" ? { Environment = var.environment } : {},
+  )
+
   vpc_id = var.vpc_id != null ? var.vpc_id : data.aws_vpc.selected[0].id
 
   # Allowed AZs: use all available in region, but drop us-east-1e which is unsupported by EKS

@@ -19,7 +19,7 @@ resource "aws_security_group" "cluster" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 
-  tags = merge(var.tags, {
+  tags = merge(local.tags, {
     Name = "${var.cluster_name}-cluster-sg"
   })
 }
@@ -60,7 +60,7 @@ resource "aws_security_group" "load_balancer" {
     ipv6_cidr_blocks = ["::/0"]
   }
 
-  tags = merge(var.tags, {
+  tags = merge(local.tags, {
     Name                                        = "${var.cluster_name}-lb-sg"
     "kubernetes.io/cluster/${var.cluster_name}" = "owned"
   })
@@ -144,7 +144,7 @@ resource "aws_security_group" "node_group" {
     ipv6_cidr_blocks = ["::/0"]
   }
 
-  tags = merge(var.tags, {
+  tags = merge(local.tags, {
     Name                                        = "${var.cluster_name}-node-sg"
     "kubernetes.io/cluster/${var.cluster_name}" = "owned"
   })
@@ -183,7 +183,7 @@ resource "aws_eks_cluster" "this" {
     aws_iam_role_policy_attachment.cluster_AmazonEKSVPCResourceController,
   ]
 
-  tags = merge(var.tags, {
+  tags = merge(local.tags, {
     Name = var.cluster_name
   })
 }
@@ -210,7 +210,7 @@ resource "aws_eks_node_group" "this" {
   disk_size      = var.node_group_disk_size
   instance_types = var.node_group_instance_types
 
-  tags = merge(var.tags, {
+  tags = merge(local.tags, {
     Name                                        = "${var.cluster_name}-primary-node-group"
     "kubernetes.io/cluster/${var.cluster_name}" = "owned"
   })
@@ -242,7 +242,7 @@ resource "aws_eks_fargate_profile" "this" {
     }
   }
 
-  tags = merge(var.tags, each.value.tags, {
+  tags = merge(local.tags, each.value.tags, {
     Name = "${var.cluster_name}-${each.key}-fargate-profile"
   })
 
@@ -265,7 +265,7 @@ resource "aws_eks_addon" "vpc_cni" {
 
   depends_on = [aws_eks_node_group.this, aws_eks_fargate_profile.this]
 
-  tags = var.tags
+  tags = local.tags
 
   lifecycle {
     ignore_changes = [
@@ -284,7 +284,7 @@ resource "aws_eks_addon" "kube_proxy" {
 
   depends_on = [aws_eks_node_group.this, aws_eks_fargate_profile.this]
 
-  tags = var.tags
+  tags = local.tags
 
   lifecycle {
     ignore_changes = [
@@ -302,7 +302,7 @@ resource "aws_eks_addon" "coredns" {
 
   depends_on = [aws_eks_node_group.this, aws_eks_fargate_profile.this]
 
-  tags = var.tags
+  tags = local.tags
 
   lifecycle {
     ignore_changes = [

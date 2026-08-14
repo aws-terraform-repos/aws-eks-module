@@ -69,6 +69,12 @@ variable "tags" {
   default     = {}
 }
 
+variable "environment" {
+  description = "Deployment environment (e.g. dev, staging, production), merged into resource tags as Environment"
+  type        = string
+  default     = ""
+}
+
 variable "endpoint_private_access" {
   description = "Enable private API server endpoint"
   type        = bool
