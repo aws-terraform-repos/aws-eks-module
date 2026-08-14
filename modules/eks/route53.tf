@@ -5,7 +5,7 @@ resource "aws_route53_zone" "cluster_zones" {
   name    = each.value
   comment = "Managed by EKS cluster ${var.cluster_name} for external-dns"
 
-  tags = merge(var.tags, {
+  tags = merge(local.tags, {
     Name                    = each.value
     "kubernetes.io/cluster" = var.cluster_name
     "external-dns/owner"    = var.external_dns_txt_owner_id != null ? var.external_dns_txt_owner_id : var.cluster_name
@@ -21,7 +21,7 @@ resource "aws_route53_zone" "cluster_subdomains" {
   name    = "${each.value}.${var.primary_domain}"
   comment = "Subdomain zone for EKS cluster ${var.cluster_name}"
 
-  tags = merge(var.tags, {
+  tags = merge(local.tags, {
     Name                    = "${each.value}.${var.primary_domain}"
     "kubernetes.io/cluster" = var.cluster_name
     "external-dns/owner"    = var.external_dns_txt_owner_id != null ? var.external_dns_txt_owner_id : var.cluster_name

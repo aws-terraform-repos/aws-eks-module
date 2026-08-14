@@ -434,7 +434,7 @@ resource "aws_iam_role" "cluster" {
   name               = "${var.cluster_name}-cluster-role"
   assume_role_policy = data.aws_iam_policy_document.cluster_assume_role_policy.json
 
-  tags = merge(var.tags, {
+  tags = merge(local.tags, {
     Name = "${var.cluster_name}-cluster-role"
   })
 }
@@ -454,7 +454,7 @@ resource "aws_iam_role" "node_group" {
   name               = "${var.cluster_name}-node-group-role"
   assume_role_policy = data.aws_iam_policy_document.node_assume_role_policy.json
 
-  tags = merge(var.tags, {
+  tags = merge(local.tags, {
     Name = "${var.cluster_name}-node-group-role"
   })
 }
@@ -489,7 +489,7 @@ resource "aws_iam_role" "fargate_profile" {
     Version = "2012-10-17"
   })
 
-  tags = merge(var.tags, {
+  tags = merge(local.tags, {
     Name = "${var.cluster_name}-fargate-profile-role"
   })
 }
@@ -524,7 +524,7 @@ resource "aws_iam_role" "vpc_cni" {
     ]
   })
 
-  tags = merge(var.tags, {
+  tags = merge(local.tags, {
     Name = "${var.cluster_name}-vpc-cni-role"
   })
 }
@@ -553,7 +553,7 @@ resource "aws_iam_role" "alb_controller" {
     ]
   })
 
-  tags = merge(var.tags, {
+  tags = merge(local.tags, {
     Name = "${var.cluster_name}-alb-controller-role"
   })
 }
@@ -605,7 +605,7 @@ resource "aws_iam_policy" "external_dns" {
     ]
   })
 
-  tags = merge(var.tags, {
+  tags = merge(local.tags, {
     Name = "${var.cluster_name}-external-dns-policy"
   })
 }
@@ -633,7 +633,7 @@ resource "aws_iam_role" "external_dns" {
     ]
   })
 
-  tags = merge(var.tags, {
+  tags = merge(local.tags, {
     Name = "${var.cluster_name}-external-dns-role"
   })
 }
@@ -668,7 +668,7 @@ resource "aws_iam_role" "ebs_csi_driver" {
     ]
   })
 
-  tags = merge(var.tags, {
+  tags = merge(local.tags, {
     Name = "${var.cluster_name}-ebs-csi-driver-role"
   })
 }
@@ -704,7 +704,7 @@ resource "aws_iam_policy" "fluent_bit" {
     ]
   })
 
-  tags = merge(var.tags, {
+  tags = merge(local.tags, {
     Name = "${var.cluster_name}-fluent-bit-policy"
   })
 }
@@ -733,7 +733,7 @@ resource "aws_iam_role" "fluent_bit" {
     ]
   })
 
-  tags = merge(var.tags, {
+  tags = merge(local.tags, {
     Name = "${var.cluster_name}-fluent-bit-role"
   })
 }
@@ -752,7 +752,7 @@ resource "aws_iam_openid_connect_provider" "eks" {
   thumbprint_list = [data.tls_certificate.eks.certificates[0].sha1_fingerprint]
   url             = aws_eks_cluster.this.identity[0].oidc[0].issuer
 
-  tags = merge(var.tags, {
+  tags = merge(local.tags, {
     Name = "${var.cluster_name}-eks-irsa"
   })
 }
@@ -798,7 +798,7 @@ resource "aws_iam_policy" "flux_cd" {
     ]
   })
 
-  tags = merge(var.tags, {
+  tags = merge(local.tags, {
     Name = "${var.cluster_name}-flux-cd-policy"
   })
 }
@@ -826,7 +826,7 @@ resource "aws_iam_role" "flux_cd" {
     ]
   })
 
-  tags = merge(var.tags, {
+  tags = merge(local.tags, {
     Name = "${var.cluster_name}-flux-cd-role"
   })
 }
@@ -862,7 +862,7 @@ resource "aws_iam_policy" "cluster_autoscaler" {
     ]
   })
 
-  tags = merge(var.tags, {
+  tags = merge(local.tags, {
     Name = "${var.cluster_name}-cluster-autoscaler-policy"
   })
 }
@@ -891,7 +891,7 @@ resource "aws_iam_role" "cluster_autoscaler" {
     ]
   })
 
-  tags = merge(var.tags, {
+  tags = merge(local.tags, {
     Name = "${var.cluster_name}-cluster-autoscaler-role"
   })
 }

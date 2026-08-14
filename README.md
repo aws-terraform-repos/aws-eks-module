@@ -343,6 +343,7 @@ module "eks" {
 | flux_cd_git_repository_branch | Git repository branch for Flux CD to monitor | `string` | `"main"` | no |
 | flux_cd_image_automation | Whether to enable Flux CD image automation | `bool` | `false` | no |
 | tags | A map of tags to add to all resources | `map(string)` | `{}` | no |
+| environment | Deployment environment (e.g. dev, staging, production), merged into resource tags as Environment | `string` | `""` | no |
 
 ## Outputs
 
