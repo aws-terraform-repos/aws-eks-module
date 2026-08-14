@@ -1,0 +1,57 @@
+name: Terraform CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  fmt:
+    name: tofu fmt check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: opentofu/setup-opentofu@v1
+        with:
+          tofu_version: "1.8.4"
+      - run: tofu fmt -check -recursive -diff
+
+  plan:
+    name: tofu plan (${{ matrix.dir }})
+    needs: fmt
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        dir:
+            - examples/spot
+    steps:
+      - uses: actions/checkout@v4
+      - uses: opentofu/setup-opentofu@v1
+        with:
+          tofu_version: "1.8.4"
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::465532803838:role/github-actions-terraform-plan-role
+          aws-region: us-east-1
+      - name: tofu init
+        working-directory: ${{ matrix.dir }}
+        run: tofu init -input=false
+      - name: tofu plan
+        working-directory: ${{ matrix.dir }}
+        # examples/spot discovers its VPC by Name tag; this account's default VPC has
+        # no such tag, so pin a real vpc_id here to skip that lookup for CI plan purposes.
+        # *.tfvars is gitignored repo-wide, so this is passed as a -var instead of a file.
+        run: |
+          if [ "${{ matrix.dir }}" = "examples/spot" ]; then
+            tofu plan -input=false -var="vpc_id=vpc-0d492b1b508d1ddd7"
+          else
+            tofu plan -input=false
+          fi

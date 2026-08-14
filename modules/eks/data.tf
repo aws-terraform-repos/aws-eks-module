@@ -172,7 +172,7 @@ locals {
 
   # Allowed AZs: use all available in region, but drop us-east-1e which is unsupported by EKS
   available_azs = data.aws_availability_zones.available.names
-  allowed_azs   = data.aws_region.current.name == "us-east-1" ? [
+  allowed_azs = data.aws_region.current.name == "us-east-1" ? [
     for az in local.available_azs : az if az != "us-east-1e"
   ] : local.available_azs
 
