@@ -1,5 +1,16 @@
 version: 3
 projects:
-  - name: default
+  - name: aws-eks-module-basic
+    dir: examples/basic
+  - name: aws-eks-module-advanced
+    dir: examples/advanced
+  - name: aws-eks-module-on-demand
+    dir: examples/on-demand
+  - name: aws-eks-module-spot
     dir: examples/spot
-    workflow: default
+  - name: aws-eks-module-fargate
+    dir: examples/fargate
+  - name: aws-eks-module-argo-cd
+    dir: examples/argo-cd
+  - name: aws-eks-module-flux-cd
+    dir: examples/flux-cd
