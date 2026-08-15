@@ -326,7 +326,13 @@ resource "time_sleep" "wait_for_flux_crds" {
 }
 
 # Git Repository Source (if repository URL is provided)
-resource "kubernetes_manifest" "flux_git_repository" {
+#
+# Uses kubectl_manifest (alekc/kubectl provider) rather than kubernetes_manifest:
+# kubernetes_manifest fetches the target CRD's OpenAPI schema from the live cluster
+# during plan, which fails with "cannot create REST client: no client config" when
+# the cluster's endpoint/CA (module.eks.cluster_endpoint/...) are still unknown on a
+# first-time plan/apply. kubectl_manifest applies the YAML without that preflight.
+resource "kubectl_manifest" "flux_git_repository" {
   count = var.enable_helm_deployments && var.enable_flux_cd && var.flux_cd_git_repository_url != null ? 1 : 0
 
   depends_on = [
@@ -334,7 +340,7 @@ resource "kubernetes_manifest" "flux_git_repository" {
     time_sleep.wait_for_flux_crds
   ]
 
-  manifest = {
+  yaml_body = yamlencode({
     apiVersion = "source.toolkit.fluxcd.io/v1"
     kind       = "GitRepository"
     metadata = {
@@ -352,16 +358,16 @@ resource "kubernetes_manifest" "flux_git_repository" {
         name = var.flux_cd_git_auth_secret_name
       }
     } : {})
-  }
+  })
 }
 
 # Kustomization (if repository URL is provided)
-resource "kubernetes_manifest" "flux_kustomization" {
+resource "kubectl_manifest" "flux_kustomization" {
   count = var.enable_helm_deployments && var.enable_flux_cd && var.flux_cd_git_repository_url != null ? 1 : 0
 
-  depends_on = [kubernetes_manifest.flux_git_repository]
+  depends_on = [kubectl_manifest.flux_git_repository]
 
-  manifest = {
+  yaml_body = yamlencode({
     apiVersion = "kustomize.toolkit.fluxcd.io/v1"
     kind       = "Kustomization"
     metadata = {
@@ -379,7 +385,7 @@ resource "kubernetes_manifest" "flux_kustomization" {
       targetNamespace = "default"
       timeout         = "5m"
     }
-  }
+  })
 }
 
 # Argo CD Namespace
