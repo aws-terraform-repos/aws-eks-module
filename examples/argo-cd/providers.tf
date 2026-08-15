@@ -42,3 +42,16 @@ provider "helm" {
     token                  = data.aws_eks_cluster_auth.this.token
   }
 }
+
+# Configure kubectl Provider (required by the module's Flux CD manifests)
+#
+# lazy_load defers building the client until first use instead of validating
+# host/cert at provider-configure time, since those come from module.eks
+# outputs that are unknown until the cluster is created.
+provider "kubectl" {
+  host                   = module.eks.cluster_endpoint
+  cluster_ca_certificate = base64decode(module.eks.cluster_certificate_authority_data)
+  token                  = data.aws_eks_cluster_auth.this.token
+  load_config_file       = false
+  lazy_load              = true
+}
