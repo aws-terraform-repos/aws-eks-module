@@ -1,5 +1,17 @@
 version: 3
 projects:
-  - name: default
+  - name: argo-cd
+    dir: examples/argo-cd
+    workflow: default
+  - name: fargate
+    dir: examples/fargate
+    workflow: default
+  - name: flux-cd
+    dir: examples/flux-cd
+    workflow: default
+  - name: on-demand
+    dir: examples/on-demand
+    workflow: default
+  - name: spot
     dir: examples/spot
     workflow: default

@@ -31,6 +31,10 @@ jobs:
       fail-fast: false
       matrix:
         dir:
+            - examples/argo-cd
+            - examples/fargate
+            - examples/flux-cd
+            - examples/on-demand
             - examples/spot
     steps:
       - uses: actions/checkout@v4
@@ -46,12 +50,7 @@ jobs:
         run: tofu init -input=false
       - name: tofu plan
         working-directory: ${{ matrix.dir }}
-        # examples/spot discovers its VPC by Name tag; this account's default VPC has
+        # All examples discover their VPC by Name tag; this account's default VPC has
         # no such tag, so pin a real vpc_id here to skip that lookup for CI plan purposes.
         # *.tfvars is gitignored repo-wide, so this is passed as a -var instead of a file.
-        run: |
-          if [ "${{ matrix.dir }}" = "examples/spot" ]; then
-            tofu plan -input=false -var="vpc_id=vpc-0d492b1b508d1ddd7"
-          else
-            tofu plan -input=false
-          fi
+        run: tofu plan -input=false -var="vpc_id=vpc-0d492b1b508d1ddd7"
